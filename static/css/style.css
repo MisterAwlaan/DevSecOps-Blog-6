@@ -1,0 +1,109 @@
+/* --- OVERRIDE BOOTSTRAP : ÉDITION PINK POWER --- */
+
+:root {
+    /* On redéfinit les couleurs de base de tout le framework */
+    --bs-primary: #ff85a1;        /* Rose vibrant */
+    --bs-primary-rgb: 255, 133, 161;
+    --bs-body-bg: #fff0f3;       /* Fond rose très pâle */
+    --bs-body-color: #7a4a53;    /* Texte marron-rose pour plus de douceur que le noir */
+    --bs-border-color: #ffc2d1;  /* Bordures roses */
+}
+
+/* Fond de page avec un léger motif discret */
+body {
+    background-image: radial-gradient(#ffdae3 1px, transparent 1px);
+    background-size: 20px 20px;
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+/* --- Barre de navigation --- */
+.navbar.bg-body-tertiary {
+    background-color: #ffe5ec !important; /* Rose crème */
+    border-bottom: 5px solid #ff85a1;
+}
+
+.navbar-brand {
+    color: #ff4d6d !important;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* --- Cartes de recettes --- */
+.card {
+    background-color: #ffffff;
+    border: 3px solid #ffc2d1 !important;
+    border-radius: 25px !important;
+    box-shadow: 8px 8px 0px #ffdae3; /* Ombre décalée style BD */
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 12px 12px 0px #ffb3c1;
+    border-color: #ff85a1 !important;
+}
+
+.card-title {
+    color: #ff4d6d;
+    font-weight: bold;
+}
+
+/* --- Boutons --- */
+.btn-primary {
+    background-color: #ff85a1 !important;
+    border: 2px solid #ff4d6d !important;
+    border-radius: 50px !important;
+    color: white !important;
+    padding: 8px 20px;
+    box-shadow: 0 4px 0 #c9184a;
+}
+
+.btn-primary:hover {
+    background-color: #ffb3c1 !important;
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #c9184a;
+}
+
+/* --- Recherche et Inputs --- */
+.form-control {
+    border: 2px solid #ffc2d1 !important;
+    border-radius: 50px !important;
+    color: #ff4d6d !important;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 133, 161, 0.25) !important;
+    border-color: #ff85a1 !important;
+}
+
+.btn-outline-success {
+    /* On détourne le bouton vert pour le mettre en rose aussi ! */
+    color: #ff4d6d !important;
+    border-color: #ff4d6d !important;
+    border-radius: 50px !important;
+}
+
+.btn-outline-success:hover {
+    background-color: #ff4d6d !important;
+    color: white !important;
+}
+
+/* --- Eléments décoratifs --- */
+.my_line {
+    border-top: 5px dotted #ff85a1 !important;
+    opacity: 1;
+}
+
+h1, h2 {
+    color: #ff4d6d;
+    text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px #ffdae3;
+}
+
+footer {
+    background-color: #ff85a1;
+    color: white;
+    padding: 20px;
+    border-radius: 50px 50px 0 0;
+    margin-top: 40px;
+}

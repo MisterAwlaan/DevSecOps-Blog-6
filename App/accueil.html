@@ -2,51 +2,58 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Blog de Cuisine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style_accueil.css">
+    <title>Blog de Cuisine - Accueil</title>
 </head>
 <body>
 
     <header>
-        <h1>Bienvenue sur le blog de Cuisine</h1>
-        <p></p>
+        <h1>🍴 Blog de Cuisine</h1>
+        <p>Partagez vos recettes avec le monde entier</p>
     </header>
 
-    <hr> <nav>
+    <hr>
+
+    <nav>
         <ul>
-            <li><a href="connexion.html">login</a></li>
-            <li><a href="profil.html">profil</a></li>
-            <li><a href="ajouter_post.html">Ajouter post</a></li>
+            <li><a href="/">Accueil</a></li>
+            <li><a href="/login">Connexion</a></li>
+            <li><a href="/profil">Mon Profil</a></li>
+            <li><a href="/ajouter_post">Ajouter un post</a></li>
         </ul>
     </nav>
 
     <hr>
 
     <main>
-        <section>
-            <h2>À propos de nous</h2>
-            <p>Voici un paragraphe de présentation. Sans CSS, le texte s'affiche de manière linéaire, avec la police par défaut de votre navigateur.</p>
-        </section>
+        <h2>Dernières publications</h2>
 
-        <section>
-            <h2>Nos points forts</h2>
-            <ul>
-                <li>Simplicité du code</li>
-                <li>Légèreté de chargement</li>
-                <li>Structure sémantique</li>
-            </ul>
-        </section>
+        {% for post in tous_les_posts %}
+            <article>
+                <header>
+                    <h3>{{ post.titre }}</h3>
+                    <p>Par <strong>{{ post.auteur }}</strong></p>
+                </header>
+                
+                <section>
+                    <p>{{ post.contenu }}</p>
+                </section>
 
-        <section>
-            <h2>Me contacter</h2>
-            <p>Cliquez sur le bouton ci-dessous pour nous envoyer un message :</p>
-            <button type="button">Envoyer un message</button>
-        </section>
-    </main>
+                <footer>
+                    <a href="/post/{{ post.id }}">Voir les détails</a>
+                </footer>
+                <hr width="30%" align="left">
+            </article>
+        {% else %}
+            <p>Aucun post n'a été publié pour le moment. Soyez le premier !</p>
+        {% endfor %}
+        </main>
 
     <hr>
 
     <footer>
-        <p>Copyright &copy; 2026 - Tous droits réservés.</p>
+        <p>&copy; 2026 - Plateforme Cuisine développée avec Flask</p>
     </footer>
 
 </body>

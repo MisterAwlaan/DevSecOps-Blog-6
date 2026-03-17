@@ -1,0 +1,108 @@
+/* Import d'une police toute douce depuis Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;500&display=swap');
+
+body {
+    background-color: #fff0f5; /* Rose très pâle (Lavender Blush) */
+    font-family: 'Fredoka', sans-serif;
+    color: #5d4037; /* Marron doux pour le texte, plus lisible que le noir */
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #ffc1cc; /* Rose "Sakura" */
+    padding: 2rem;
+    text-align: center;
+    border-bottom: 5px solid #ff91a4;
+    box-shadow: 0 4px 15px rgba(255, 145, 164, 0.3);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    color: #ffffff;
+    text-shadow: 2px 2px #ff8da1;
+}
+
+nav {
+    background-color: #ffffff;
+    padding: 10px;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav li {
+    display: inline;
+    margin: 0 15px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #ff69b4; /* Hot Pink */
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+nav a:hover {
+    color: #ff1493;
+    text-shadow: 0 0 5px #ffc1cc;
+}
+
+main {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+/* Style des posts (les articles) */
+article {
+    background-color: #ffffff;
+    border: 3px solid #ffc1cc;
+    border-radius: 20px; /* Coins très arrondis */
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 8px 8px 0px #ffdae0; /* Ombre décalée style kawaii */
+    transition: transform 0.2s;
+}
+
+article:hover {
+    transform: scale(1.02); /* Petit effet de zoom au survol */
+}
+
+article h3 {
+    color: #ff69b4;
+    margin-top: 0;
+}
+
+/* Style du bouton / lien "Voir les détails" */
+article footer a {
+    display: inline-block;
+    background-color: #ffb6c1;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+article footer a:hover {
+    background-color: #ff69b4;
+}
+
+hr {
+    border: 0;
+    height: 2px;
+    background-image: linear-gradient(to right, transparent, #ffc1cc, transparent);
+    margin: 20px 0;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.8rem;
+    color: #ffb6c1;
+}

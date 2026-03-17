@@ -35,6 +35,7 @@ if __name__ == '__main__':
     # Le mode debug permet de voir les erreurs et de redémarrer 
     # automatiquement le serveur quand tu modifies le code.
     app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')

@@ -36,20 +36,3 @@ if __name__ == '__main__':
     # automatiquement le serveur quand tu modifies le code.
     app.run(debug=True)
 
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialisation de l'objet SQLAlchemy
-db = SQLAlchemy(app)
-
-# --- Modèles ---
-
-class recettes(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    titre = db.Column(db.String(80), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    image_file = db.Column(db.String(120), nullable=False, default='default.jpg')
-
-    def __repr__(self):
-        return f'<recette {self.titre}>'

@@ -38,7 +38,18 @@
         <h1>🍴 Miamstagram</h1>
     <p>Partagez vos recettes avec le monde entier</p>
     </div>
-
+    <div class ="row">
+        {% for recette in recettes %}
+        <div class="card">
+        <img src="{{ url_for('static', filename='img/' + recette.image_file) }}" class="card-img-top" alt="...">
+        <div class="card-body">
+            <h5 class="card-title">{{ recette.titre }}</h5>
+            <p class="card-text">{{ recette.description }}</p>
+            <a href="#" class="btn btn-primary">A vos fourneaux !</a>
+        </div>
+        </div>
+        {% endfor %}
+    </div>
     <div class="row d-felx mt-3 text-center">
         <footer>
             <p>&copy; 2026 - Plateforme Cuisine développée avec Flask</p>

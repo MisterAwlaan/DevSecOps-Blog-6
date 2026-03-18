@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5001:5000" # On utilise le port 5001 pour être tranquille
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_DEBUG=1

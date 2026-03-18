@@ -23,7 +23,7 @@
     <header class="sticky-top">
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid">
-                <a class="navbar-brand">
+                <a class="navbar-brand" href="{{ url_for('home') }}">
                     <img src="{{ url_for('static', filename='img/logo_horizontal.png') }}" alt="Logo" height="80">
                 </a>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -47,6 +47,7 @@
     </header> 
     <div class ="row mt-5 justify-content-center">
         <div class="col-8">
+            <a href="{{ url_for('home')}}" class="btn btn-primary mb-4">< Retour à l'accueil</a>
             <h1 class="mb-4">{{ recette.titre }}</h1>
             <p class="mb-4">{{ recette.description }}</h3>
             <hr class="my-line mb-3">

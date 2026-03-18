@@ -45,6 +45,5 @@ def recettes_page(recette_id):
 if __name__ == '__main__':
     # Le mode debug permet de voir les erreurs et de redémarrer 
     # automatiquement le serveur quand tu modifies le code.
-    app.run(debug=True)
     app.run(host='0.0.0.0', port=5000, debug=True)
 

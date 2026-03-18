@@ -1,0 +1,14 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    # Cette ligne permet de lancer ton script AVANT le serveur
+    command: >
+      sh -c "python app.py && 
+             python -m flask run --host=0.0.0.0 --port=5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py

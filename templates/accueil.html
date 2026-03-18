@@ -62,7 +62,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ recette.titre }}</h5>
                         <p class="card-text">{{ recette.description }}</p>
-                        <a href="#" class="btn btn-primary">A vos fourneaux !</a>
+                        <a href="{{ url_for('recettes_page', recette_id=recette.recette_id) }}" class="btn btn-primary">A vos fourneaux !</a>
                     </div>
                     </div>
                 </div>

@@ -1,2 +1,4 @@
-INSERT INTO recettes (titre, description, image_file) 
-VALUES ('Gâteau', 'Un délicieux gâteau au chocolat fait maison.', 'gateau_au_chocolat.jpg');
+INSERT INTO recettes (titre, description, image_file, difficulte, temps_preparation, temps_cuisson, ingredients, instructions) 
+VALUES ('Gâteau', 'Un délicieux gâteau au chocolat fait maison.', 'gateau_au_chocolat.jpg', 'Facile', 30, 45, 'farine, sucre, œufs, beurre, chocolat', 'Étape 1: Mélanger les ingrédients; Étape 2: Cuire le gâteau;');
+INSERT INTO recettes (titre, description, image_file, difficulte, temps_preparation, temps_cuisson, ingredients, instructions) 
+VALUES ('Tarte aux pommes', 'Une tarte aux pommes classique avec une pâte croustillante.', 'tarte_aux_pommes.jpg', 'Moyen', 20, 40, 'pâte brisée, pommes, sucre, cannelle', 'Étape 1: Préparer la pâte; Étape 2: Disposer les pommes; Étape 3: Cuire la tarte;');

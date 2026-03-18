@@ -107,3 +107,88 @@ footer {
     border-radius: 50px 50px 0 0;
     margin-top: 40px;
 }
+
+/* --- Typographie : On force le Quicksand partout pour l'aspect arrondi --- */
+body, p, .navbar, .card, .btn {
+    font-family: 'Quicksand', sans-serif;
+}
+
+/* --- Barre de navigation : Liens plus mignons --- */
+.nav-link {
+    color: #ff4d6d !important;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #ff85a1 !important;
+    transform: scale(1.1);
+}
+
+/* --- Headers de cartes : Finition "Bonbon" --- */
+.card-header {
+    background-color: #ffb3c1 !important; /* Rose un peu plus soutenu */
+    color: white !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 3px solid #ff85a1 !important;
+    border-radius: 22px 22px 0 0 !important; /* On suit l'arrondi de la carte */
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* --- Listes d'ingrédients et groupes --- */
+.list-group-item {
+    background-color: transparent !important;
+    border-color: #ffdae3 !important; /* Bordures très douces */
+    color: #7a4a53;
+    padding: 12px 20px;
+}
+
+
+/* --- Customisation des puces (Ingrédients) --- */
+.card-body ul {
+    list-style-type: '🌸'; /* Petite fleur à la place des points noirs */
+    padding-left: 20px;
+}
+
+.card-body ul li {
+    padding-left: 10px;
+    margin-bottom: 5px;
+}
+
+/* --- Customisation des numéros (Instructions) --- */
+.card-body ol {
+    counter-reset: kawaii-counter;
+    list-style: none;
+    padding-left: 0;
+}
+
+.card-body ol li {
+    counter-increment: kawaii-counter;
+    margin-bottom: 15px;
+    position: relative;
+    padding-left: 45px;
+}
+
+.card-body ol li::before {
+    content: counter(kawaii-counter);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    background-color: #ff85a1;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    box-shadow: 2px 2px 0px #c9184a;
+}
+
+h1 {
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+}

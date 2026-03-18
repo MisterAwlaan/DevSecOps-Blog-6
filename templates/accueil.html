@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" href="style_accueil.css"> -->
     <title>Miamstagram - Accueil</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,28 +23,44 @@
                 <button class="btn btn-outline-success" type="submit">🔍</button>
                 </form>
                 <div class="d-flex ms-auto">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Connexion</a>
-                        </li>
-                        <li class="nav-item">
-                        <a class="nav-link" href="#">Inscription</a>
-                        </li>
-                    </ul>
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
+    {% if 'user_id' in session %}
+        <li class="nav-item me-3">
+            <a class="btn btn-success rounded-pill fw-bold" href="{{ url_for('ajouter_recette') }}" style="background-color: #ff4d6d; border: none; box-shadow: 0 4px 0 #c9184a;">
+                ➕ Créer une recette
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-bold text-primary" href="{{ url_for('profil') }}">👤 {{ session['username'] }}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('deconnexion') }}">Déconnexion</a>
+        </li>
+    {% else %}
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('connexion') }}">Connexion</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('inscription') }}">Inscription</a>
+        </li>
+    {% endif %}
+</ul>
                 </div>
             </div>
             </div>
         </nav>   
     </header> 
+    
     <div class="row text-center mt-3" style="background-color: #ff85a1;">
-    <div class="col-12">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" 
-             alt="Logo" 
-             class="img-fluid"
-             style="max-width: 250px;">
-        <p class="mt-2" style="color: #ffffff; font-weight: bold;">Partagez vos recettes avec le monde entier</p>
+        <div class="col-12">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" 
+                 alt="Logo" 
+                 class="img-fluid"
+                 style="max-width: 250px;">
+            <p class="mt-2" style="color: #ffffff; font-weight: bold;">Partagez vos recettes avec le monde entier</p>
+        </div>
     </div>
-</div>
+
     <div class ="row mt-5 justify-content-center">
         <div class="col-8">
             <div class="row ">
@@ -69,6 +84,8 @@
                 {% endfor %}
             </div>
         </div>
+    </div>
+    
     <div class="row d-flex mt-8 text-center">
         <footer class="mt-8">
             <p>&copy; 2026 - Plateforme Cuisine développée avec Flask</p>

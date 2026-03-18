@@ -165,6 +165,27 @@ def modifier_recette(recette_id):
         return redirect(url_for('recettes_page', recette_id=recette.recette_id))
     return render_template('modifier_post.html', recette=recette)
 
+@app.route('/supprimer_recette/<int:recette_id>', methods=['POST'])
+def supprimer_recette(recette_id):
+    # 1. Vérifier si l'utilisateur est connecté
+    if 'user_id' not in session:
+        flash("Tu dois être connecté pour faire cela.", "warning")
+        return redirect(url_for('connexion'))
+        
+    recette = recettes.query.get_or_404(recette_id)
+    
+    # 2. SÉCURITÉ : Vérifier que l'utilisateur est bien l'auteur de la recette
+    if recette.auteur_id != session['user_id']:
+        flash("Tu ne peux supprimer que tes propres recettes !", "danger")
+        return redirect(url_for('home'))
+
+    # 3. Suppression dans la base de données
+    db.session.delete(recette)
+    db.session.commit()
+    
+    flash("Ta recette a été supprimée définitivement 🗑️.", "success")
+    return redirect(url_for('profil'))
+
 @app.route('/profil', methods=['GET', 'POST'])
 def profil():
     if 'user_id' not in session:

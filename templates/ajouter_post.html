@@ -15,7 +15,7 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card p-4 shadow-sm" style="border-radius: 25px; border: 3px solid #ffc2d1;">
-                    <h2 class="text-center mb-4" style="color: #ff4d6d;">À tes fourneaux ! 👩‍🍳</h2>
+                    <h2 class="text-center mb-4" style="color: #ff4d6d;">À tes fourneaux !</h2>
                     <hr class="my_line">
 
                     <form method="POST" action="{{ url_for('ajouter_recette') }}" enctype="multipart/form-data">
@@ -28,8 +28,8 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-bold" style="color: #7a4a53;">Visibilité</label>
                                 <select class="form-select" name="statut" style="border: 2px solid #ffc2d1; border-radius: 50px; color: #ff4d6d;">
-                                    <option value="public" selected>🌍 Publique</option>
-                                    <option value="prive">🔒 Privée (Moi seul)</option>
+                                    <option value="public" selected>Publique</option>
+                                    <option value="prive">Privée (Moi seul)</option>
                                 </select>
                             </div>
                         </div>
@@ -69,7 +69,7 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold" style="color: #7a4a53;">Photo du plat 📷</label>
+                            <label class="form-label fw-bold" style="color: #7a4a53;">Photo du plat</label>
                             <input type="file" class="form-control" name="image" accept="image/*">
                         </div>
 

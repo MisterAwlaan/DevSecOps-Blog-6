@@ -76,10 +76,13 @@
                                 <span class="badge bg-success ms-2">Public</span>
                             {% endif %}
                         </h5>
-                        <div>
-                            <a href="{{ url_for('recettes_page', recette_id=m_recette.recette_id) }}" class="btn btn-sm btn-outline-primary">Voir</a>
-                            <a href="{{ url_for('modifier_recette', recette_id=m_recette.recette_id) }}" class="btn btn-sm btn-warning" style="border-radius: 50px;">Modifier</a>
-                        </div>
+                    <div>
+                        <a href="{{ url_for('recettes_page', recette_id=m_recette.recette_id) }}" class="btn btn-sm btn-outline-primary" style="border-radius: 50px;">Voir</a>
+                        <a href="{{ url_for('modifier_recette', recette_id=m_recette.recette_id) }}" class="btn btn-sm btn-warning" style="border-radius: 50px;">Modifier</a>
+                        <form action="{{ url_for('supprimer_recette', recette_id=m_recette.recette_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Es-tu sûr de vouloir supprimer cette recette définitivement ? Cette action est irréversible.');">
+                        <button type="submit" class="btn btn-sm btn-danger" style="border-radius: 50px; background-color: #c9184a; border: none;">Supprimer</button>
+                    </form>
+                    </div>  
                     </div>
                 </div>
             </div>

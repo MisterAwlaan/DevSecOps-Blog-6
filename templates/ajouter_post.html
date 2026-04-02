@@ -19,7 +19,7 @@
                     <hr class="my_line">
 
                     <form method="POST" action="{{ url_for('ajouter_recette') }}" enctype="multipart/form-data">
-                        
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row mb-3">
                             <div class="col-md-8">
                                 <label class="form-label fw-bold" style="color: #7a4a53;">Titre de la recette</label>

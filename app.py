@@ -3,9 +3,11 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
-app.secret_key = 'cle_secrete_super_securisee_pour_le_dev'
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_key_fallback')
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
@@ -44,7 +46,7 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
-# --- Routes ---
+# --- Routes ---    
 @app.route('/')
 def home():
  

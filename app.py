@@ -3,9 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
-<<<<<<< HEAD
 from dotenv import load_dotenv
-=======
+
 from PIL import Image
 
 # --- Extensions et signatures MIME autorisées (pas de SVG !) ---
@@ -56,7 +55,6 @@ def sauvegarder_image(file, dossier, prefixe):
         return None
 
     return unique_filename
->>>>>>> 9e7ff56b11a57dfabdfdc489463ef271d907e941
 
 load_dotenv()
 app = Flask(__name__)
@@ -276,3 +274,6 @@ def deconnexion():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+# À supprimer après le test !
+print(f"Ma clé secrète chargée est : {app.secret_key}")

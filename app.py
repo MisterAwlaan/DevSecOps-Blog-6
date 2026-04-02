@@ -3,6 +3,56 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+from PIL import Image
+
+# --- Extensions et signatures MIME autorisées (pas de SVG !) ---
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+# Formats reconnus par Pillow — le SVG n'en fait pas partie
+ALLOWED_PIL_FORMATS = {'PNG', 'JPEG', 'GIF', 'WEBP'}
+
+def extension_autorisee(filename):
+    """Vérifie que l'extension fait partie de la liste blanche."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def type_mime_autorise(filepath):
+    """
+    Tente d'ouvrir le fichier avec Pillow pour vérifier que c'est
+    une vraie image raster. Un SVG ou tout autre fichier non-image
+    lèvera une exception et sera rejeté.
+    """
+    try:
+        with Image.open(filepath) as img:
+            return img.format in ALLOWED_PIL_FORMATS
+    except Exception:
+        return False
+
+def sauvegarder_image(file, dossier, prefixe):
+    """
+    Valide et sauvegarde un fichier image uploadé.
+    Renvoie le nom de fichier final, ou None si le fichier est invalide.
+    Supprime le fichier si la vérification MIME échoue (après écriture temporaire).
+    """
+    if not file or file.filename == '':
+        return None
+
+    filename = secure_filename(file.filename)
+
+    if not extension_autorisee(filename):
+        flash("Format de fichier non autorisé. Seuls PNG, JPG, GIF et WEBP sont acceptés.", "danger")
+        return None
+
+    unique_filename = f"{prefixe}_{filename}"
+    filepath = os.path.join(dossier, unique_filename)
+    file.save(filepath)
+
+    # Vérification de la vraie signature binaire APRÈS écriture
+    if not type_mime_autorise(filepath):
+        os.remove(filepath)  # On supprime le fichier suspect du disque
+        flash("Le fichier uploadé n'est pas une image valide.", "danger")
+        return None
+
+    return unique_filename
 
 app = Flask(__name__)
 app.secret_key = 'cle_secrete_super_securisee_pour_le_dev'
@@ -29,10 +79,8 @@ class recettes(db.Model):
     temps_cuisson = db.Column(db.Integer, nullable=True)     
     ingredients = db.Column(db.Text, nullable=False)          
     instructions = db.Column(db.Text, nullable=False)
-    
-    # --- NOUVEAUTÉS ---
-    statut = db.Column(db.String(20), nullable=False, default='public') # 'public' ou 'prive'
-    auteur_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Lien avec l'auteur
+    statut = db.Column(db.String(20), nullable=False, default='public')
+    auteur_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,21 +95,17 @@ with app.app_context():
 # --- Routes ---
 @app.route('/')
 def home():
- 
     recettes_publiques = recettes.query.filter_by(statut='public').all()
     return render_template('accueil.html', recettes=recettes_publiques)
 
 @app.route('/recettes/<int:recette_id>')
 def recettes_page(recette_id):
     recette = recettes.query.get_or_404(recette_id)
-   
     if recette.statut == 'prive' and session.get('user_id') != recette.auteur_id:
         flash("Cette recette est privée.", "danger")
         return redirect(url_for('home'))
-        
     return render_template('recettes.html', recette=recette)
 
-# --- NOUVELLE ROUTE : Ajouter une recette ---
 @app.route('/ajouter_recette', methods=['GET', 'POST'])
 def ajouter_recette():
     if 'user_id' not in session:
@@ -80,12 +124,16 @@ def ajouter_recette():
 
         image_file = 'default.jpg'
         if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                unique_filename = f"user{session['user_id']}_{filename}"
-                file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
-                image_file = unique_filename
+            fichier_sauve = sauvegarder_image(
+                request.files['image'],
+                UPLOAD_FOLDER,
+                f"user{session['user_id']}"
+            )
+            if fichier_sauve is None and request.files['image'].filename != '':
+                # Un fichier invalide a été soumis : on arrête
+                return render_template('ajouter_post.html')
+            if fichier_sauve:
+                image_file = fichier_sauve
 
         nouvelle_recette = recettes(
             titre=titre, description=description, image_file=image_file,
@@ -153,12 +201,15 @@ def modifier_recette(recette_id):
         recette.instructions = request.form.get('instructions')
         recette.statut = request.form.get('statut')
         if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                unique_filename = f"user{session['user_id']}_{filename}"
-                file.save(os.path.join(UPLOAD_FOLDER, unique_filename))
-                recette.image_file = unique_filename 
+            fichier_sauve = sauvegarder_image(
+                request.files['image'],
+                UPLOAD_FOLDER,
+                f"user{session['user_id']}"
+            )
+            if fichier_sauve is None and request.files['image'].filename != '':
+                return render_template('modifier_post.html', recette=recette)
+            if fichier_sauve:
+                recette.image_file = fichier_sauve 
         db.session.commit()
         
         flash("Ta recette a été modifiée avec succès ! ✨", "success")
@@ -167,19 +218,15 @@ def modifier_recette(recette_id):
 
 @app.route('/supprimer_recette/<int:recette_id>', methods=['POST'])
 def supprimer_recette(recette_id):
-    # 1. Vérifier si l'utilisateur est connecté
     if 'user_id' not in session:
         flash("Tu dois être connecté pour faire cela.", "warning")
         return redirect(url_for('connexion'))
         
     recette = recettes.query.get_or_404(recette_id)
-    
-    # 2. SÉCURITÉ : Vérifier que l'utilisateur est bien l'auteur de la recette
     if recette.auteur_id != session['user_id']:
         flash("Tu ne peux supprimer que tes propres recettes !", "danger")
         return redirect(url_for('home'))
 
-    # 3. Suppression dans la base de données
     db.session.delete(recette)
     db.session.commit()
     
@@ -203,17 +250,17 @@ def profil():
                 db.session.commit()
                 flash("Mot de passe mis à jour avec succès !", "success")
         if 'profile_pic' in request.files:
-            file = request.files['profile_pic']
-            if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                unique_filename = f"user_{user.id}_{filename}"
-                file.save(os.path.join(app.config['PROFILE_FOLDER'], unique_filename))
-                user.profile_pic = unique_filename
+            fichier_sauve = sauvegarder_image(
+                request.files['profile_pic'],
+                app.config['PROFILE_FOLDER'],
+                f"user_{user.id}"
+            )
+            if fichier_sauve:
+                user.profile_pic = fichier_sauve
                 db.session.commit()
                 flash("Photo de profil mise à jour !", "success")
         return redirect(url_for('profil'))
 
-    # On récupère aussi les recettes de l'utilisateur pour les afficher plus tard !
     mes_recettes = recettes.query.filter_by(auteur_id=user.id).all()
     return render_template('profil.html', user=user, mes_recettes=mes_recettes)
 

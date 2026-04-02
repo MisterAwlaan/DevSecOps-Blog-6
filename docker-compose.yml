@@ -1,9 +1,12 @@
 services:
   web:
     build: .
+    container_name: miamstagram_app
     ports:
-      - "5001:5000" # On utilise le port 5001 pour être tranquille
-    volumes:
-      - .:/app
+      - "5000:5000"
     environment:
       - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+    # On laisse le volume pour le développement local (modifications en direct)
+    volumes:
+      - .:/app

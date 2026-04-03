@@ -275,5 +275,3 @@ def deconnexion():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
 
-# À supprimer après le test !
-print(f"Ma clé secrète chargée est : {app.secret_key}")

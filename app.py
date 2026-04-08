@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
-from dotenv import load_dotenv
 
 from PIL import Image
 
@@ -13,16 +12,10 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 ALLOWED_PIL_FORMATS = {'PNG', 'JPEG', 'GIF', 'WEBP'}
 
 def extension_autorisee(filename):
-    """Vérifie que l'extension fait partie de la liste blanche."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def type_mime_autorise(filepath):
-    """
-    Tente d'ouvrir le fichier avec Pillow pour vérifier que c'est
-    une vraie image raster. Un SVG ou tout autre fichier non-image
-    lèvera une exception et sera rejeté.
-    """
     try:
         with Image.open(filepath) as img:
             return img.format in ALLOWED_PIL_FORMATS
@@ -30,11 +23,6 @@ def type_mime_autorise(filepath):
         return False
 
 def sauvegarder_image(file, dossier, prefixe):
-    """
-    Valide et sauvegarde un fichier image uploadé.
-    Renvoie le nom de fichier final, ou None si le fichier est invalide.
-    Supprime le fichier si la vérification MIME échoue (après écriture temporaire).
-    """
     if not file or file.filename == '':
         return None
 
@@ -48,17 +36,14 @@ def sauvegarder_image(file, dossier, prefixe):
     filepath = os.path.join(dossier, unique_filename)
     file.save(filepath)
 
-    # Vérification de la vraie signature binaire APRÈS écriture
     if not type_mime_autorise(filepath):
-        os.remove(filepath)  # On supprime le fichier suspect du disque
         flash("Le fichier uploadé n'est pas une image valide.", "danger")
         return None
 
     return unique_filename
 
-load_dotenv()
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_key_fallback')
+app.secret_key = 'cle_secrete_super_securisee_pour_le_dev'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
@@ -95,7 +80,6 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
-# --- Routes ---    
 @app.route('/')
 def home():
     recettes_publiques = recettes.query.filter_by(statut='public').all()
@@ -273,5 +257,3 @@ def deconnexion():
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-

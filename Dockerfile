@@ -1,15 +1,20 @@
-FROM python:3.12-slim 
+FROM python:3.12-slim
 
-WORKDIR /app 
+WORKDIR /app
 
-COPY requirements.txt . 
-RUN pip install --no-cache-dir -r requirements.txt 
+# Copie uniquement ce qui est nécessaire
+COPY requirements.txt .
 
-COPY . . 
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Exposition du port 5000
-EXPOSE 5000 
+COPY app.py .
+COPY templates/ templates/
+COPY static/ static/
 
-# Lancement direct de l'application via python
-# Cela permet de respecter ton bloc "if __name__ == '__main__':"
+# Créer un utilisateur non-root
+RUN adduser --disabled-password --gecos "" appuser
+USER appuser
+
+EXPOSE 5000
+
 CMD ["python", "app.py"]

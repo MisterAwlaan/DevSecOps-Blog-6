@@ -58,7 +58,6 @@ jobs:
           docker rm blog-app || true
 
       - name: Login to DockerHub
-        if: github.event_name == 'push' # On ne push que lors d'un merge sur main
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}

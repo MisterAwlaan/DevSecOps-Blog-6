@@ -17,12 +17,16 @@ jobs:
       - name: Build Docker image
         run: docker build -t devsecops-blog:latest .
 
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: devsecops-blog:latest
-          format: table
-          exit-code: 1
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          trivyignores: .trivyignore
+        run: |
+          trivy image \
+            --exit-code 1 \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --ignorefile .trivyignore \
+            --format table \
+            devsecops-blog:latest

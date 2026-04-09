@@ -22,9 +22,8 @@ jobs:
           docker run -d \
             --name blog-app \
             -p 5000:5000 \
+            -e FLASK_RUN_HOST=0.0.0.0 \
             devsecops-blog:latest
-          # Petit temps d'attente pour laisser Flask démarrer
-          sleep 5 
 
       - name: Wait for application to be ready
         run: |

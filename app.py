@@ -257,4 +257,5 @@ def deconnexion():
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
-        app.run(host='127.0.0.1', port=5000, debug=True)
+        host_ip = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
+        app.run(host=host_ip, port=5000)

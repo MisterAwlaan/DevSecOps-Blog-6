@@ -18,7 +18,7 @@ jobs:
         run: docker build -t devsecops-blog:latest .
 
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: devsecops-blog:latest
           format: table

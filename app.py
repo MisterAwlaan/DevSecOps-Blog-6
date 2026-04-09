@@ -3,12 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
-
+from dotenv import load_dotenv
 from PIL import Image
 
-# --- Extensions et signatures MIME autorisées (pas de SVG !) ---
+load_dotenv()
+
+# --- Extensions et signatures MIME autorisées ---
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-# Formats reconnus par Pillow — le SVG n'en fait pas partie
 ALLOWED_PIL_FORMATS = {'PNG', 'JPEG', 'GIF', 'WEBP'}
 
 def extension_autorisee(filename):
@@ -36,14 +37,19 @@ def sauvegarder_image(file, dossier, prefixe):
     filepath = os.path.join(dossier, unique_filename)
     file.save(filepath)
 
+    # Vérification de la vraie signature binaire APRÈS écriture
     if not type_mime_autorise(filepath):
+        os.remove(filepath)  # Supprime le fichier suspect du disque
         flash("Le fichier uploadé n'est pas une image valide.", "danger")
         return None
 
     return unique_filename
 
+
 app = Flask(__name__)
-app.secret_key = 'cle_secrete_super_securisee_pour_le_dev'
+
+# Clé secrète via variable d'environnement — jamais hardcodée
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_key_fallback')
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
@@ -63,9 +69,9 @@ class recettes(db.Model):
     description = db.Column(db.Text, nullable=False)
     image_file = db.Column(db.String(120), nullable=False, default='default.jpg')
     difficulte = db.Column(db.String(20), nullable=False)
-    temps_preparation = db.Column(db.Integer, nullable=False) 
-    temps_cuisson = db.Column(db.Integer, nullable=True)     
-    ingredients = db.Column(db.Text, nullable=False)          
+    temps_preparation = db.Column(db.Integer, nullable=False)
+    temps_cuisson = db.Column(db.Integer, nullable=True)
+    ingredients = db.Column(db.Text, nullable=False)
     instructions = db.Column(db.Text, nullable=False)
     statut = db.Column(db.String(20), nullable=False, default='public')
     auteur_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -80,6 +86,7 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
+# --- Routes ---
 @app.route('/')
 def home():
     recettes_publiques = recettes.query.filter_by(statut='public').all()
@@ -98,7 +105,7 @@ def ajouter_recette():
     if 'user_id' not in session:
         flash("Tu dois être connecté pour publier une recette.", "warning")
         return redirect(url_for('connexion'))
-        
+
     if request.method == 'POST':
         titre = request.form.get('titre')
         description = request.form.get('description')
@@ -107,7 +114,7 @@ def ajouter_recette():
         temps_cuisson = request.form.get('temps_cuisson')
         ingredients = request.form.get('ingredients')
         instructions = request.form.get('instructions')
-        statut = request.form.get('statut') 
+        statut = request.form.get('statut')
 
         image_file = 'default.jpg'
         if 'image' in request.files:
@@ -117,7 +124,6 @@ def ajouter_recette():
                 f"user{session['user_id']}"
             )
             if fichier_sauve is None and request.files['image'].filename != '':
-                # Un fichier invalide a été soumis : on arrête
                 return render_template('ajouter_post.html')
             if fichier_sauve:
                 image_file = fichier_sauve
@@ -130,10 +136,9 @@ def ajouter_recette():
         )
         db.session.add(nouvelle_recette)
         db.session.commit()
-        
         flash("Ta recette a été ajoutée avec succès ! 🍲", "success")
         return redirect(url_for('home'))
-        
+
     return render_template('ajouter_post.html')
 
 @app.route('/inscription', methods=['GET', 'POST'])
@@ -172,7 +177,7 @@ def modifier_recette(recette_id):
     if 'user_id' not in session:
         flash("Tu dois être connecté pour modifier une recette.", "warning")
         return redirect(url_for('connexion'))
-        
+
     recette = recettes.query.get_or_404(recette_id)
     if recette.auteur_id != session['user_id']:
         flash("Tu ne peux modifier que tes propres recettes !", "danger")
@@ -187,6 +192,7 @@ def modifier_recette(recette_id):
         recette.ingredients = request.form.get('ingredients')
         recette.instructions = request.form.get('instructions')
         recette.statut = request.form.get('statut')
+
         if 'image' in request.files:
             fichier_sauve = sauvegarder_image(
                 request.files['image'],
@@ -196,11 +202,12 @@ def modifier_recette(recette_id):
             if fichier_sauve is None and request.files['image'].filename != '':
                 return render_template('modifier_post.html', recette=recette)
             if fichier_sauve:
-                recette.image_file = fichier_sauve 
+                recette.image_file = fichier_sauve
+
         db.session.commit()
-        
         flash("Ta recette a été modifiée avec succès ! ✨", "success")
         return redirect(url_for('recettes_page', recette_id=recette.recette_id))
+
     return render_template('modifier_post.html', recette=recette)
 
 @app.route('/supprimer_recette/<int:recette_id>', methods=['POST'])
@@ -208,7 +215,7 @@ def supprimer_recette(recette_id):
     if 'user_id' not in session:
         flash("Tu dois être connecté pour faire cela.", "warning")
         return redirect(url_for('connexion'))
-        
+
     recette = recettes.query.get_or_404(recette_id)
     if recette.auteur_id != session['user_id']:
         flash("Tu ne peux supprimer que tes propres recettes !", "danger")
@@ -216,7 +223,6 @@ def supprimer_recette(recette_id):
 
     db.session.delete(recette)
     db.session.commit()
-    
     flash("Ta recette a été supprimée définitivement 🗑️.", "success")
     return redirect(url_for('profil'))
 
@@ -224,6 +230,7 @@ def supprimer_recette(recette_id):
 def profil():
     if 'user_id' not in session:
         return redirect(url_for('connexion'))
+
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
@@ -236,6 +243,7 @@ def profil():
                 user.password = generate_password_hash(new_password)
                 db.session.commit()
                 flash("Mot de passe mis à jour avec succès !", "success")
+
         if 'profile_pic' in request.files:
             fichier_sauve = sauvegarder_image(
                 request.files['profile_pic'],
@@ -246,6 +254,7 @@ def profil():
                 user.profile_pic = fichier_sauve
                 db.session.commit()
                 flash("Photo de profil mise à jour !", "success")
+
         return redirect(url_for('profil'))
 
     mes_recettes = recettes.query.filter_by(auteur_id=user.id).all()
@@ -257,5 +266,6 @@ def deconnexion():
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
-        host_ip = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
-        app.run(host=host_ip, port=5000)
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    host_ip = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
+    app.run(host=host_ip, port=5000, debug=debug_mode)

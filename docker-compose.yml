@@ -1,12 +1,22 @@
-services:
-  web:
-    build: .
-    container_name: miamstagram_app
-    ports:
-      - "5000:5000"
-    environment:
-      - FLASK_DEBUG=1
-      - PYTHONUNBUFFERED=1
-    # On laisse le volume pour le développement local (modifications en direct)
-    volumes:
-      - .:/app
+FROM python:3.12-alpine
+
+
+WORKDIR /app
+
+RUN apk update && apk upgrade && \
+    apk add --no-cache gcc musl-dev libffi-dev
+
+
+COPY requirements.txt .
+
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+
+COPY . .
+
+
+EXPOSE 5000
+
+
+CMD ["python", "app.py"]

@@ -6,9 +6,10 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - '**.py' 
+      - '**.py' # S'active si un fichier Python est modifié
 
 jobs:
+  # Job 1 : Linting avec Flake8
   flake8_py3:
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +42,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-   test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +58,7 @@ jobs:
       - name: Run Tests
         run: pytest
 
+  # 3. Séparer les jobs : Second job pour le Build Docker
   build:
     runs-on: ubuntu-latest
     # 4. Paralléliser intelligemment : ce job attend que 'test' soit fini et réussi
@@ -64,6 +66,3 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Build Docker Image
-        run: docker build -t mon-app-python .

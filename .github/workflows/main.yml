@@ -6,10 +6,9 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - '**.py' # S'active si un fichier Python est modifié
+      - '**.py' 
 
 jobs:
-  # Job 1 : Linting avec Flake8
   flake8_py3:
     runs-on: ubuntu-latest
     steps:

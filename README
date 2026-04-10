@@ -1,0 +1,286 @@
+# DevSecOps — Blog de Recettes Flask
+
+Projet réalisé dans le cadre du cours DevSecOps — Classe B2 Guardia 2026.
+
+L'application est un blog de recettes en Flask (SQLite, SQLAlchemy, upload
+d'images avec validation Pillow). L'objectif du projet est de construire une
+pipeline CI/CD sécurisée de A à Z autour de cette application, en intégrant
+progressivement des outils de qualité, de sécurité statique, d'analyse des
+dépendances, de sécurité image Docker, et de test dynamique.
+
+---
+
+## Stack technique
+
+| Composant         | Technologie                 |
+| ----------------- | --------------------------- |
+| Application       | Python 3.12 / Flask 3.0     |
+| Base de données   | SQLite via Flask-SQLAlchemy |
+| Traitement images | Pillow                      |
+| Conteneurisation  | Docker / docker-compose     |
+| CI/CD             | GitHub Actions              |
+
+---
+
+## Structure des workflows
+
+```
+.github/workflows/
+├── main.yml            # Lab 1 + Lab 5 — Qualité, secrets, tests, build conditionnel
+├── sast-sca.yml        # Lab 2 — Analyse statique et dépendances
+├── docker-security.yml # Lab 3 — Build image + scan Trivy
+└── lab4-ci.yml         # Lab 4 — DAST Nikto + push DockerHub
+```
+
+---
+
+## Lab 1 — Qualité & Secrets
+
+**Objectif :** détecter les erreurs de code et les secrets exposés dans le dépôt.
+
+**Fichier :** `main.yml`
+
+### Ce qui a été mis en place
+
+**Flake8** — linter Python configuré pour détecter les erreurs critiques
+(syntaxe cassée, variables indéfinies, imports manquants). Seules les règles
+`E9`, `F63`, `F7`, `F82` sont actives pour éviter le bruit sur le style.
+
+```yaml
+- name: Run flake8
+  run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+```
+
+**Gitleaks** — scan de l'historique Git complet (`fetch-depth: 0`) pour
+détecter les secrets exposés : tokens, clés API, mots de passe en dur.
+Le scan bloque la pipeline si un secret est détecté.
+
+```yaml
+- name: Gitleaks
+  uses: gitleaks/gitleaks-action@v2
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Ce que ça a détecté / corrigé
+
+Gitleaks a forcé la bonne pratique dès le départ : aucun secret ne doit
+transiter en clair dans le code. La clé secrète Flask est chargée depuis
+une variable d'environnement via `python-dotenv`.
+
+---
+
+## Lab 2 — SAST & SCA
+
+**Objectif :** détecter les vulnérabilités dans le code source et dans les
+dépendances.
+
+**Fichier :** `sast-sca.yml`
+
+### Ce qui a été mis en place
+
+**Bandit (SAST)** — analyse statique du code Python. Il détecte les mauvaises
+pratiques de sécurité : injections SQL, exécution de commandes arbitraires,
+usage de fonctions dangereuses, configuration non sécurisée. Le scan exclut
+les dossiers `.venv`, `static` et `templates` qui ne contiennent pas de
+logique Python.
+
+```yaml
+- name: SAST — Bandit
+  run: bandit -r . -x ./.venv,./static,./templates --severity-level medium -f txt
+```
+
+Bandit a remonté un warning sur `debug=True` dans `app.run()`, ce qui expose
+un debugger interactif en production. Corrigé en passant par une variable
+d'environnement :
+
+```python
+app.run(debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true')
+```
+
+**pip-audit (SCA)** — analyse des dépendances déclarées dans `requirements.txt`
+contre la base de données des CVE connues. Bloque si une dépendance vulnérable
+est détectée.
+
+```yaml
+- name: SCA — pip-audit
+  run: pip-audit -r requirements.txt
+```
+
+### Pourquoi deux jobs séparés ?
+
+SAST et SCA analysent des périmètres différents et peuvent tourner en parallèle.
+Les isoler permet de relancer uniquement le job qui fail, et d'identifier
+clairement l'origine d'un problème.
+
+---
+
+## Lab 3 — Docker & Image Security
+
+**Objectif :** construire une image Docker et la scanner pour détecter les
+vulnérabilités dans les couches système et les dépendances embarquées.
+
+**Fichier :** `docker-security.yml`
+
+### Ce qui a été mis en place
+
+Le `Dockerfile` utilise `python:3.12-slim` comme image de base pour minimiser
+la surface d'attaque (pas d'outils inutiles, image allégée).
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["python", "app.py"]
+```
+
+**Trivy** — scanner de vulnérabilités sur l'image construite. Il analyse les
+paquets système, les dépendances Python embarquées, et les fichiers de
+configuration. La pipeline bloque sur les sévérités `HIGH` et `CRITICAL`.
+Les failles sans correctif disponible sont ignorées (`ignore-unfixed: true`)
+pour éviter le bruit sur des problèmes non actionnables.
+
+```yaml
+- name: Scan image with Trivy
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: "devsecops-blog:latest"
+    format: "table"
+    exit-code: "1"
+    severity: "HIGH,CRITICAL"
+    ignore-unfixed: true
+```
+
+---
+
+## Lab 4 — DAST & Deploy
+
+**Objectif :** tester l'application en conditions réelles d'exécution et
+publier l'image sur DockerHub.
+
+**Fichier :** `lab4-ci.yml`
+
+### Ce qui a été mis en place
+
+**Nikto (DAST)** — scanner de vulnérabilités web qui teste l'application
+pendant qu'elle tourne. Il détecte les en-têtes de sécurité manquants,
+les configurations serveur exposées, les fichiers sensibles accessibles,
+et les vulnérabilités web courantes. L'application est démarrée dans un
+conteneur Docker avant le scan, puis arrêtée proprement.
+
+```yaml
+- name: Run Nikto DAST scan
+  run: docker run --rm --network host frapsoft/nikto -h http://localhost:5000 -Tuning 123bde
+  continue-on-error: true
+```
+
+Le rapport Nikto est exporté en artefact GitHub Actions pour consultation
+après chaque run.
+
+**Push DockerHub** — l'image est taguée avec `latest` et le SHA du commit
+pour garantir la traçabilité. Le push ne s'effectue que sur les événements
+`push` (pas sur les pull requests).
+
+```yaml
+- name: Tag and Push to DockerHub
+  if: github.event_name == 'push'
+  run: |
+    docker tag devsecops-blog:latest $REPO:latest
+    docker tag devsecops-blog:latest $REPO:${{ github.sha }}
+    docker push $REPO:latest
+    docker push $REPO:${{ github.sha }}
+```
+
+Les credentials DockerHub sont stockés dans les secrets GitHub
+(`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`), jamais en clair dans le code.
+
+---
+
+## Lab 5 — CI/CD Intelligente & Optimisation
+
+**Objectif :** rendre la pipeline conditionnelle et intelligente plutôt
+qu'une simple suite de commandes linéaires.
+
+**Fichier :** `main.yml`
+
+### Ce qui a été mis en place
+
+**Déclenchement conditionnel** — les jobs de qualité ne se lancent que si
+des fichiers Python ont été modifiés, évitant des runs inutiles sur des
+changements de templates HTML ou de CSS.
+
+```yaml
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.py"
+```
+
+**Séparation des jobs** — `test` et `build` sont deux jobs distincts.
+Chacun tourne dans son propre runner éphémère avec un environnement propre.
+
+**Parallélisation avec `needs`** — le job `build` Docker ne se déclenche
+que si le job `test` est passé avec succès. Si les tests échouent, l'image
+n'est jamais construite.
+
+```yaml
+build:
+  runs-on: ubuntu-latest
+  needs: test
+  steps:
+    - uses: actions/checkout@v4
+```
+
+**Runners éphémères** — chaque job repart d'un environnement vierge.
+Il n'y a pas de checkout partagé entre jobs : chaque job qui a besoin du
+code doit faire son propre `actions/checkout@v4`.
+
+### Ce qu'on a appris
+
+Un seul gros job présente plusieurs problèmes : si une étape échoue au milieu,
+tout est perdu et il faut tout relancer. En séparant les jobs, on peut
+identifier précisément ce qui fail et relancer uniquement ce job-là.
+La parallélisation réduit aussi le temps total d'exécution de la pipeline.
+
+---
+
+## Lab 6 — Features avancées _(en cours)_
+
+> Cette section sera complétée au fil du développement des nouvelles
+> fonctionnalités. L'objectif est de développer des features applicatives
+> et sécurité avancées, puis de les confronter à l'ensemble de la pipeline
+> construite lors des labs précédents.
+
+---
+
+## Lancer l'application en local
+
+```bash
+# Avec Docker
+docker compose up --build
+
+# Sans Docker
+pip install -r requirements.txt
+python app.py
+```
+
+L'application est accessible sur `http://localhost:5000`.
+
+---
+
+## Variables d'environnement
+
+| Variable             | Description                        | Valeur par défaut  |
+| -------------------- | ---------------------------------- | ------------------ |
+| `FLASK_SECRET_KEY`   | Clé secrète Flask (sessions)       | `dev_key_fallback` |
+| `FLASK_DEBUG`        | Active le mode debug               | `false`            |
+| `DOCKERHUB_USERNAME` | Username DockerHub (secret GitHub) | —                  |
+| `DOCKERHUB_TOKEN`    | Token DockerHub (secret GitHub)    | —                  |
+
+---
+
+_Projet réalisé par MisterAwlaan — Guardia Cybersecurity School B2 2026_

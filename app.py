@@ -301,3 +301,6 @@ if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
     host_ip = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
     app.run(host=host_ip, port=5000, debug=debug_mode)
+
+
+MON_SUPER_SECRET_LOCAL = "motdepasse123!"

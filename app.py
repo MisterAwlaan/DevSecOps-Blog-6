@@ -82,6 +82,14 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     profile_pic = db.Column(db.String(120), nullable=False, default='default_user.png')
     recettes = db.relationship('recettes', backref='auteur', lazy=True)
+    commentaires = db.relationship('Comment', backref='auteur', lazy=True)
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    contenu = db.Column(db.Text, nullable=False)
+    auteur_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    recette_id = db.Column(db.Integer, db.ForeignKey('recettes.recette_id'), nullable=False)
+    auteur = db.relationship('User', backref='commentaires')
 
 with app.app_context():
     db.create_all()
@@ -98,7 +106,8 @@ def recettes_page(recette_id):
     if recette.statut == 'prive' and session.get('user_id') != recette.auteur_id:
         flash("Cette recette est privée.", "danger")
         return redirect(url_for('home'))
-    return render_template('recettes.html', recette=recette)
+    commentaires = Comment.query.filter_by(recette_id=recette_id).all()
+    return render_template('recettes.html', recette=recette, commentaires=commentaires)
 
 @app.route('/ajouter_recette', methods=['GET', 'POST'])
 def ajouter_recette():
@@ -259,6 +268,29 @@ def profil():
 
     mes_recettes = recettes.query.filter_by(auteur_id=user.id).all()
     return render_template('profil.html', user=user, mes_recettes=mes_recettes)
+
+@app.route('/recettes/<int:recette_id>/commenter', methods=['POST'])
+def commenter(recette_id):
+    if 'user_id' not in session:
+        flash("Tu dois être connecté pour commenter.", "warning")
+        return redirect(url_for('recettes_page', recette_id=recette_id))
+
+    contenu = request.form.get('contenu', '').strip()
+    if not contenu:
+        flash("Le commentaire ne peut pas être vide.", "danger")
+        return redirect(url_for('recettes_page', recette_id=recette_id))
+
+    recette = recettes.query.get_or_404(recette_id)
+
+    comment = Comment(
+        contenu=contenu,
+        auteur_id=session['user_id'],
+        recette_id=recette.recette_id
+    )
+    db.session.add(comment)
+    db.session.commit()
+    flash("Commentaire ajouté !", "success")
+    return redirect(url_for('recettes_page', recette_id=recette_id))
 
 @app.route('/deconnexion')
 def deconnexion():

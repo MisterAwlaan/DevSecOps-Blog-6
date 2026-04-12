@@ -151,6 +151,59 @@
             </div>
           </div>
         </div>
+
+        <!-- Section Commentaires -->
+        <div class="row mb-5">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header fw-bold">💬 Commentaires</div>
+              <div class="card-body">
+                {% if commentaires %} {% for c in commentaires %}
+                <div class="border rounded p-3 mb-3 bg-light">
+                  <strong>{{ c.auteur.username }}</strong>
+                  <p class="mb-0 mt-1">{{ c.contenu }}</p>
+                </div>
+                {% endfor %} {% else %}
+                <p class="text-muted">
+                  Aucun commentaire pour l'instant. Soyez le premier !
+                </p>
+                {% endif %}
+
+                <hr />
+
+                {% if session.user_id %}
+                <form
+                  method="POST"
+                  action="{{ url_for('commenter', recette_id=recette.recette_id) }}"
+                >
+                  <div class="mb-3">
+                    <label for="contenu" class="form-label fw-bold"
+                      >Laisser un commentaire</label
+                    >
+                    <textarea
+                      class="form-control"
+                      id="contenu"
+                      name="contenu"
+                      rows="3"
+                      placeholder="Votre commentaire..."
+                      maxlength="500"
+                      required
+                    ></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary rounded-pill">
+                    Envoyer
+                  </button>
+                </form>
+                {% else %}
+                <p class="text-muted">
+                  <a href="{{ url_for('connexion') }}">Connecte-toi</a> pour
+                  laisser un commentaire.
+                </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </body>

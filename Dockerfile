@@ -23,7 +23,6 @@ ENV PYTHONPATH=/app/libs
 
 EXPOSE 5000
 
-# On passe sur l'utilisateur sécurisé
-USER nonroot
 
+ENTRYPOINT ["/usr/bin/python3"]
 CMD ["app.py"]

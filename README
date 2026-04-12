@@ -301,11 +301,29 @@ Les credentials DockerHub sont stockés dans les secrets GitHub
 ---
 **Bonus**
 ### Mission
-- Faire du multi-staging
-- Utiliser des images Distroless
-- Scanner pré-build
-- Scanner post-build
-**Fichier :** 'Dockerfile'
+- Gestion de docker-compose dans la pipeline
+- Remplacer Nikto par Wapiti
+- Exporter le resultat avec un artefact
+**Fichier :** 'lab4-ci.yml'
+
+Remplacer Nikto par Wapiti 
+
+ - name: Run Wapiti DAST scan
+        # Installation rapide de Wapiti sur le runner Ubuntu et lancement du scan
+        run: |
+          sudo apt-get update && sudo apt-get install -y wapiti
+          wapiti -u http://localhost:5000 -f html -o wapiti-report.html
+        continue-on-error: true
+
+     
+Exporter le résultat avec un artefact :
+
+      - name: Upload Wapiti report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wapiti-dast-report
+          path: wapiti-report.html
 
 
 ## Lab 5 — CI/CD Intelligente & Optimisation

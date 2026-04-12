@@ -299,6 +299,14 @@ Les credentials DockerHub sont stockés dans les secrets GitHub
 (`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`), jamais en clair dans le code.
 
 ---
+**Bonus**
+### Mission
+- Faire du multi-staging
+- Utiliser des images Distroless
+- Scanner pré-build
+- Scanner post-build
+**Fichier :** 'Dockerfile'
+
 
 ## Lab 5 — CI/CD Intelligente & Optimisation
 

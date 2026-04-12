@@ -46,6 +46,23 @@ jobs:
         with:
           path: ./
           extra_args: --only-verified
+  
+  
+  custom-secret-scan:
+    name: Custom Regex Scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Scan pour des secrets custom
+        run: |
+          if grep -rE "GUARDIA-API-[A-Z0-9]{16}" . --exclude-dir=.git; then
+            echo "🚨 ERREUR : Un secret custom a été détecté dans le code !"
+            exit 1
+          else
+            echo "✅ Aucun secret custom trouvé."
+          fi
+
   test:
     runs-on: ubuntu-latest
     steps:

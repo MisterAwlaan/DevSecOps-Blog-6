@@ -14,7 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # --- NOUVEAUTÉ : Scan pré-build (Analyse du fichier Dockerfile) ---
       - name: Scan Dockerfile configuration with Trivy
         uses: aquasecurity/trivy-action@master
         with:
@@ -24,7 +23,6 @@ jobs:
           exit-code: '1'
           severity: 'HIGH,CRITICAL'
 
-      # --- TES LIGNES DE BASE ---
       - name: Build Docker image
         run: docker build -t devsecops-blog:latest .
 

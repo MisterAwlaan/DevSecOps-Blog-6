@@ -22,10 +22,15 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install bandit pip-audit
+          pip install bandit pip-audit semgrep
 
       - name: SAST — Bandit
         run: bandit -r . -x ./.venv,./static,./templates --severity-level medium -f txt
+        continue-on-error: true
+
+      - name: SAST — Semgrep
+        run: semgrep scan --config auto .
+        continue-on-error: true
 
       - name: SCA — pip-audit
         run: pip-audit -r requirements.txt

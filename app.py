@@ -82,14 +82,14 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     profile_pic = db.Column(db.String(120), nullable=False, default='default_user.png')
     recettes = db.relationship('recettes', backref='auteur', lazy=True)
-    commentaires = db.relationship('Comment', backref='auteur', lazy=True)
+    commentaires = db.relationship('Comment', back_populates='auteur', lazy=True)
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     contenu = db.Column(db.Text, nullable=False)
     auteur_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recette_id = db.Column(db.Integer, db.ForeignKey('recettes.recette_id'), nullable=False)
-    auteur = db.relationship('User', backref='commentaires')
+    auteur = db.relationship('User', back_populates='commentaires')
 
 with app.app_context():
     db.create_all()

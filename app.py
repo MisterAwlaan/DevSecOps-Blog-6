@@ -303,4 +303,4 @@ if __name__ == '__main__':
     app.run(host=host_ip, port=5000, debug=debug_mode)
 
 
-MON_SUPER_SECRET_LOCAL = "mots_de_passe_bonus_lab1"
+MON_SUPER_SECRET_LOCAL = "root" 

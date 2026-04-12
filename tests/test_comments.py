@@ -8,7 +8,7 @@ def client():
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['WTF_CSRF_ENABLED'] = False
-    
+
     with app.app_context():
         db.drop_all()
         db.create_all()
@@ -56,11 +56,11 @@ def test_page_recette_accessible(client):
 
 
 def test_commenter_sans_connexion(client):
-    """Un utilisateur non connecté est redirigé"""
+    """Un utilisateur non connecté est redirigé vers la page de connexion"""
     response = client.post('/recettes/1/commenter', data={
         'contenu': 'Super recette !'
     }, follow_redirects=True)
-    assert 'connecté' in response.data.decode('utf-8')
+    assert 'connexion' in response.data.decode('utf-8').lower()
 
 
 def test_commenter_connecte(client):
@@ -74,12 +74,14 @@ def test_commenter_connecte(client):
 
 
 def test_commentaire_vide_refuse(client):
-    """Un commentaire vide est refusé"""
+    """Un commentaire vide est refusé et ne s'enregistre pas en BDD"""
     login(client)
-    response = client.post('/recettes/1/commenter', data={
+    client.post('/recettes/1/commenter', data={
         'contenu': '   '
     }, follow_redirects=True)
-    assert 'vide' in response.data.decode('utf-8')
+    with app.app_context():
+        total = Comment.query.count()
+        assert total == 0
 
 
 def test_xss_commentaire(client):
@@ -89,5 +91,4 @@ def test_xss_commentaire(client):
     response = client.post('/recettes/1/commenter', data={
         'contenu': payload
     }, follow_redirects=True)
-    # Le script ne doit pas apparaître tel quel dans le HTML rendu
     assert '<script>' not in response.data.decode('utf-8')

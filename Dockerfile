@@ -22,4 +22,4 @@ EXPOSE 5000
 USER nonroot
 
 # Sur Distroless Debian 12, le chemin est souvent /usr/bin/python3
-ENTRYPOINT ["/usr/bin/python3", "app.py"]
+ENTRYPOINT ["python", "app.py"]

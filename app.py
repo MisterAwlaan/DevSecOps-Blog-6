@@ -1,12 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+import logging
+from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # --- Extensions et signatures MIME autorisées ---
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -93,6 +97,30 @@ class Comment(db.Model):
 
 with app.app_context():
     db.create_all()
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    # 1. Ajout d'un log à chaque appel avec l'IP
+    logger.info(f"Endpoint /health appelé à {datetime.now().isoformat()} par {request.remote_addr}")
+
+    try:
+        # À terme : Vérification de la connexion BDD (ex: faire une requête simple)
+        # db.session.execute('SELECT 1') 
+        
+        # 2 & 3. Code HTTP 200 et retour JSON obligatoire
+        return jsonify({
+            "status": "UP",
+            "timestamp": datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        # 4. Gérer les erreurs 500
+        logger.error(f"Erreur critique healthcheck (500) : {str(e)}")
+        return jsonify({
+            "status": "DOWN",
+            "detail": "Internal Server Error"
+        }), 500
+
 
 # --- Routes ---
 @app.route('/')

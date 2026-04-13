@@ -14,16 +14,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Scan Dockerfile configuration with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+
       - name: Build Docker image
         run: docker build -t devsecops-blog:latest .
 
-      # Utiliser l'action officielle est plus rapide et propre que curl
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'devsecops-blog:latest'
           format: 'table'
-          exit-code: '1' # Bloque le pipeline si des failles sont trouvées
+          exit-code: '1' 
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true # Ignore les failles sans correctif disponible
-          # On ne met PAS de paramètre d'ignorefile ici sauf si tu crées le fichier

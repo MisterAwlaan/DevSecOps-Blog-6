@@ -27,7 +27,7 @@ dépendances, de sécurité image Docker, et de test dynamique.
 ```
 .github/workflows/
 ├── main.yml            # Lab 1 + Lab 5 + Lab 6 — Qualité, secrets, tests, coverage, build conditionnel
-├── sast-sca.yml        # Lab 2 — Analyse statique et dépendances
+├── sast-sca.yml        # Lab 2 — Analyse statique et dépendances + scan semgrep
 ├── docker-security.yml # Lab 3 — Build image + scan Trivy
 └── lab4-ci.yml         # Lab 4 — DAST Nikto + push DockerHub
 ```
@@ -69,6 +69,50 @@ transiter en clair dans le code. La clé secrète Flask est chargée depuis
 une variable d'environnement via `python-dotenv`.
 
 ---
+
+**Bonus**
+### Mission  
+- Faire passer un faux secret non détecté
+- Amélioirer la détection (règle custom avec regex)
+- Tester une alternative à Gitleaks (en complément)
+
+### Ce qui a été mis en place
+**fichier :** 'app.py'
+un faux token qui n'est pas détecté : 
+  - MON_SUPER_SECRET_LOCAL = "root" 
+**fichier:** 'main.yml'
+amélioration de la détection(regex)
+custom-secret-scan:
+    name: Custom Regex Scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Scan pour des secrets custom
+        # grep cherche la regex récursivement (-r), en ignorant le dossier .git
+        # Si grep trouve la regex, le exit 1 fait échouer la pipeline (rouge)
+        run: |
+          if grep -rE "GUARDIA-API-[A-Z0-9]{16}" . --exclude-dir=.git; then
+            echo "🚨 ERREUR : Un secret custom a été détecté dans le code !"
+            exit 1
+          else
+            echo "✅ Aucun secret custom trouvé."
+          fi
+alternative à GitLeaks
+
+ trufflehog:
+    name: Scanning (TruffleHog)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          
+      - name: TruffleHog Secret Scanner
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          extra_args: --only-verified
 
 ## Lab 2 — SAST & SCA
 
@@ -115,6 +159,25 @@ clairement l'origine d'un problème.
 
 ---
 
+**Bonus**
+### Mission  
+- Ajouter semgrep
+- Comparer les résultats
+
+### Ce qui a été mis en place
+**fichier :** 'sast-sca.yml'
+
+Ajout de Semgrep
+
+ - name: SAST — Semgrep
+        run: semgrep scan --config auto .
+        continue-on-error: true
+
+Comparaison des résultats
+
+Les deux résultats sont passées, les deux scan ont rien détecté que se soit Bandit qui a vérifié uniquement le Python ou bien Semgrep qui est un scannaire multi-langages
+
+
 ## Lab 3 — Docker & Image Security
 
 **Objectif :** construire une image Docker et la scanner pour détecter les
@@ -155,6 +218,44 @@ pour éviter le bruit sur des problèmes non actionnables.
 ```
 
 ---
+**Bonus**
+### Mission
+- Faire du multi-staging
+- Utiliser des images Distroless
+- Scanner pré-build
+- Scanner post-build
+**Fichier :** 'Dockerfile'
+Utiliser des images Distroless
+
+FROM gcr.io/distroless/python3-debian12
+
+
+**Fichier :** `docker-security.yml`
+Scan pré-build
+
+ name: Scan Dockerfile configuration with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+
+Scan Post-build
+
+    - name: Build Docker image
+        run: docker build -t devsecops-blog:latest .
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'devsecops-blog:latest'
+          format: 'table'
+          exit-code: '1' 
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true # Ignore les failles sans correctif disponible
+
 
 ## Lab 4 — DAST & Deploy
 
@@ -198,6 +299,32 @@ Les credentials DockerHub sont stockés dans les secrets GitHub
 (`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`), jamais en clair dans le code.
 
 ---
+**Bonus**
+### Mission
+- Gestion de docker-compose dans la pipeline
+- Remplacer Nikto par Wapiti
+- Exporter le resultat avec un artefact
+**Fichier :** 'lab4-ci.yml'
+
+Remplacer Nikto par Wapiti 
+
+ - name: Run Wapiti DAST scan
+        # Installation rapide de Wapiti sur le runner Ubuntu et lancement du scan
+        run: |
+          sudo apt-get update && sudo apt-get install -y wapiti
+          wapiti -u http://localhost:5000 -f html -o wapiti-report.html
+        continue-on-error: true
+
+     
+Exporter le résultat avec un artefact :
+
+      - name: Upload Wapiti report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wapiti-dast-report
+          path: wapiti-report.html
+
 
 ## Lab 5 — CI/CD Intelligente & Optimisation
 

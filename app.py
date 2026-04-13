@@ -9,8 +9,13 @@ import socket
 import sys
 from dotenv import load_dotenv
 from PIL import Image
+import socket
+import sys
+import platform
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # --- Configuration du logging ---
 logging.basicConfig(
@@ -105,6 +110,53 @@ class Comment(db.Model):
 
 with app.app_context():
     db.create_all()
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    # 1. Ajout d'un log à chaque appel avec l'IP
+    logger.info(f"Endpoint /health appelé à {datetime.now().isoformat()} par {request.remote_addr}")
+
+    try:
+        # À terme : Vérification de la connexion BDD (ex: faire une requête simple)
+        # db.session.execute('SELECT 1') 
+        
+        # 2 & 3. Code HTTP 200 et retour JSON obligatoire
+        return jsonify({
+            "status": "UP",
+            "timestamp": datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        # 4. Gérer les erreurs 500
+        logger.error(f"Erreur critique healthcheck (500) : {str(e)}")
+        return jsonify({
+            "status": "DOWN",
+            "detail": "Internal Server Error"
+        }), 500
+
+@app.route('/info', methods=['GET'])
+def info():
+    logger.info(f"Endpoint /info appelé à {datetime.now().isoformat()} par {request.remote_addr}")
+
+    mode = os.getenv('FLASK_ENV', os.getenv('APP_MODE', 'dev'))
+
+    return jsonify({
+        "app": os.getenv('APP_NAME', 'flask-recettes'),
+        "version": os.getenv('APP_VERSION', '1.0'),
+        "mode": mode,
+        "config": {
+            "port": int(os.getenv('FLASK_RUN_PORT', 5000)),
+            "host": os.getenv('FLASK_RUN_HOST', '127.0.0.1'),
+            "debug": os.getenv('FLASK_DEBUG', 'false').lower() == 'true',
+            "database": app.config['SQLALCHEMY_DATABASE_URI']
+        },
+        "runtime": {
+            "python_version": sys.version,
+            "platform": platform.system(),
+            "hostname": socket.gethostname()
+        },
+        "timestamp": datetime.now().isoformat()
+    }), 200
 
 # --- Routes ---
 @app.route('/')
@@ -378,3 +430,6 @@ if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
     host_ip = os.getenv('FLASK_RUN_HOST', '127.0.0.1')
     app.run(host=host_ip, port=5000, debug=debug_mode)
+
+
+MON_SUPER_SECRET_LOCAL = "root" 

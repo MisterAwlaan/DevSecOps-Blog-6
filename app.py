@@ -10,9 +10,6 @@ import sys
 from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image
-import socket
-import sys
-import platform
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -135,29 +132,6 @@ def health_check():
             "detail": "Internal Server Error"
         }), 500
 
-@app.route('/info', methods=['GET'])
-def info():
-    logger.info(f"Endpoint /info appelé à {datetime.now().isoformat()} par {request.remote_addr}")
-
-    mode = os.getenv('FLASK_ENV', os.getenv('APP_MODE', 'dev'))
-
-    return jsonify({
-        "app": os.getenv('APP_NAME', 'flask-recettes'),
-        "version": os.getenv('APP_VERSION', '1.0'),
-        "mode": mode,
-        "config": {
-            "port": int(os.getenv('FLASK_RUN_PORT', 5000)),
-            "host": os.getenv('FLASK_RUN_HOST', '127.0.0.1'),
-            "debug": os.getenv('FLASK_DEBUG', 'false').lower() == 'true',
-            "database": app.config['SQLALCHEMY_DATABASE_URI']
-        },
-        "runtime": {
-            "python_version": sys.version,
-            "platform": platform.system(),
-            "hostname": socket.gethostname()
-        },
-        "timestamp": datetime.now().isoformat()
-    }), 200
 
 # --- Routes ---
 @app.route('/')

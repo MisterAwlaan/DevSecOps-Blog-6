@@ -1,12 +1,27 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+import logging
+import random
+import socket
+import sys
 from dotenv import load_dotenv
 from PIL import Image
 
 load_dotenv()
+
+# --- Configuration du logging ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler("app.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # --- Extensions et signatures MIME autorisées ---
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -37,9 +52,8 @@ def sauvegarder_image(file, dossier, prefixe):
     filepath = os.path.join(dossier, unique_filename)
     file.save(filepath)
 
-    # Vérification de la vraie signature binaire APRÈS écriture
     if not type_mime_autorise(filepath):
-        os.remove(filepath)  # Supprime le fichier suspect du disque
+        os.remove(filepath)  
         flash("Le fichier uploadé n'est pas une image valide.", "danger")
         return None
 
@@ -47,8 +61,6 @@ def sauvegarder_image(file, dossier, prefixe):
 
 
 app = Flask(__name__)
-
-# Clé secrète via variable d'environnement — jamais hardcodée
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_key_fallback')
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -296,6 +308,71 @@ def commenter(recette_id):
 def deconnexion():
     session.clear()
     return redirect(url_for('home'))
+
+
+# --- Feature 1 ---
+@app.route('/health')
+def health():
+    logger.info("GET /health - vérification de l'état de l'application")
+    return jsonify({
+        "status": "ok",
+        "message": "L'application fonctionne correctement"
+    }), 200
+
+
+# --- Feature 2 ---
+@app.route('/info')
+def info():
+    logger.info("GET /info - consultation de la configuration")
+    return jsonify({
+        "app": "mon-api",
+        "version": "1.0",
+        "mode": os.getenv("APP_MODE", "dev"),
+        "port": int(os.getenv("PORT", 5000)),
+        "python_version": sys.version,
+        "hostname": socket.gethostname(),
+        "debug": os.getenv("FLASK_DEBUG", "false")
+    }), 200
+
+
+# --- Feature 3 ---
+@app.route('/random-fail')
+def random_fail():
+    try:
+        # Réussit 2 fois sur 3, échoue 1 fois sur 3
+        if random.randint(1, 3) == 1:
+            raise ValueError("Simulation d'une erreur aléatoire en production")
+
+        logger.info("GET /random-fail - succès")
+        return jsonify({"status": "ok", "message": "Tout s'est bien passé !"}), 200
+
+    except Exception as e:
+        logger.error(f"GET /random-fail - ERREUR : {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": "Une erreur est survenue (simulée)",
+            "detail": str(e)
+        }), 500
+
+
+# --- Feature 4 ---
+@app.route('/logs-demo')
+def logs_demo():
+    logger.info("GET /logs-demo - démonstration des niveaux de logs")
+
+    logger.info("INFO  [200] : Requête reçue et traitée avec succès")
+    logger.warning("WARNING [400] : Paramètre manquant ou valeur suspecte détectée")
+    logger.error("ERROR   [500] : Simulation d'une erreur critique serveur")
+
+    return jsonify({
+        "status": "ok",
+        "logs_generes": [
+            {"niveau": "INFO",    "code_http_associé": 200, "message": "Requête traitée avec succès"},
+            {"niveau": "WARNING", "code_http_associé": 400, "message": "Paramètre suspect détecté"},
+            {"niveau": "ERROR",   "code_http_associé": 500, "message": "Erreur critique simulée"}
+        ]
+    }), 200
+
 
 if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'

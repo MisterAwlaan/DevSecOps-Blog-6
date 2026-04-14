@@ -1,5 +1,6 @@
 services:
   blog-app:
+    build: .
     image: devsecops-blog:latest
     container_name: blog-app
     ports:

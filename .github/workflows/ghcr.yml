@@ -1,4 +1,4 @@
-name: Docker Image CI/CD to GHCR
+name: Release GHCR
 
 
 on:

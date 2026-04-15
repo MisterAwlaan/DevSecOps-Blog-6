@@ -3,7 +3,7 @@ services:
     build: .
     image: devsecops-blog:latest
     ports:
-      - "5000" # <-- CORRECTION : Docker assignera un port aléatoire sur l'hôte
+      - "5000:5000" # <-- CORRECTION : Docker assignera un port aléatoire sur l'hôte
     environment:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_APP=app.py

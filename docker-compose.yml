@@ -2,12 +2,10 @@ services:
   blog-app:
     build: .
     image: devsecops-blog:latest
-    container_name: blog-app
     ports:
-      - "5000:5000"
+      - "5000" # <-- CORRECTION : Docker assignera un port aléatoire sur l'hôte
     environment:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_APP=app.py
     deploy:
       replicas: 3
-  

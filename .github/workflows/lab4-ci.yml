@@ -15,20 +15,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        # On build l'image ici pour s'assurer qu'elle est nommée correctement 
-        # pour l'étape de Push vers DockerHub en fin de pipeline.
         run: docker build -t devsecops-blog:latest .
 
       - name: Start application with Docker Compose
-        # Remplace le 'docker run' classique.
-        run: docker compose up -d
+        run: docker compose up -d --scale blog-app=2
 
       - name: Wait for application to be ready
         run: |
           echo "Waiting for app to start..."
+          DYNAMIC_PORT=$(docker compose port blog-app 5000 | cut -d: -f2)
+          echo "App is on port $DYNAMIC_PORT"
+          
           for i in {1..10}; do
-            if curl -s http://localhost:5000 > /dev/null; then
+            if curl -s http://localhost:$DYNAMIC_PORT > /dev/null; then
               echo "App is up!"
+              echo "APP_PORT=$DYNAMIC_PORT" >> $GITHUB_ENV
               exit 0
             fi
             echo "Attempt $i/10 - not ready yet..."
@@ -37,22 +38,13 @@ jobs:
           exit 1
 
       - name: Run Wapiti DAST scan
-        # Installation rapide de Wapiti sur le runner Ubuntu et lancement du scan
+        continue-on-error: true
         run: |
           sudo apt-get update && sudo apt-get install -y wapiti
-          wapiti -u http://localhost:5000 -f html -o wapiti-report.html
-        continue-on-error: true
-
-      - name: Upload Wapiti report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: wapiti-dast-report
-          path: wapiti-report.html
+          wapiti -u http://localhost:${{ env.APP_PORT }} -f html -o wapiti-report.html
 
       - name: Stop application container
         if: always()
-        # Remplace le 'docker stop && docker rm' par compose down
         run: docker compose down
 
       - name: Login to DockerHub

@@ -18,7 +18,7 @@ jobs:
         run: docker build -t devsecops-blog:latest .
 
       - name: Start application with Docker Compose
-        run: docker compose up -d --scale blog-app=2
+        run: docker compose up -d 
 
       - name: Wait for application to be ready
         run: |
@@ -41,7 +41,7 @@ jobs:
         continue-on-error: true
         run: |
           sudo apt-get update && sudo apt-get install -y wapiti
-          wapiti -u http://localhost:${{ env.APP_PORT }} -f html -o wapiti-report.html
+          wapiti -u http://localhost:${{env.APP_PORT}} -f html -o wapiti-report.html
 
       - name: Stop application container
         if: always()

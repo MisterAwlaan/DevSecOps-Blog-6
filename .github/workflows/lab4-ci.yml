@@ -22,14 +22,10 @@ jobs:
 
       - name: Wait for application to be ready
         run: |
-          echo "Waiting for app to start..."
-          DYNAMIC_PORT=$(docker compose port blog-app 5000 | cut -d: -f2)
-          echo "App is on port $DYNAMIC_PORT"
-          
+          echo "Waiting for app to start on Nginx router (port 8080)..."
           for i in {1..10}; do
-            if curl -s http://localhost:$DYNAMIC_PORT > /dev/null; then
+            if curl -s http://localhost:8080 > /dev/null; then
               echo "App is up!"
-              echo "APP_PORT=$DYNAMIC_PORT" >> $GITHUB_ENV
               exit 0
             fi
             echo "Attempt $i/10 - not ready yet..."
@@ -41,7 +37,8 @@ jobs:
         continue-on-error: true
         run: |
           sudo apt-get update && sudo apt-get install -y wapiti
-          wapiti -u http://localhost:${{env.APP_PORT}} -f html -o wapiti-report.html
+          # On scanne directement le routeur sur le port 8080
+          wapiti -u http://localhost:8080 -f html -o wapiti-report.html
 
       - name: Stop application container
         if: always()

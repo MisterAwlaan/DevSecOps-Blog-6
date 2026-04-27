@@ -15,51 +15,48 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t devsecops-blog:green .
+        run: docker build -t devsecops-blog:latest .
 
+      # --- PHASE BLUE/GREEN : LANCEMENT VIA COMPOSE ---
+      - name: Start Green environment (via Docker Compose)
+        run: docker compose up -d
 
-      - name: Start Green environment (Port 8081)
+      - name: Wait for application to be ready
         run: |
-          # On lance la version Green sur un port différent pour ne pas perturber la Blue
-          docker run -d --name app-green -p 8081:8080 devsecops-blog:green
-
-      - name: Wait for Green app to be ready
-        run: |
-          echo "Waiting for Green app to start on port 8081..."
+          echo "Waiting for app to start on Nginx (port 8080)..."
           for i in {1..10}; do
-            if curl -s http://localhost:8081 > /dev/null; then
+            # On interroge le port 8080 défini dans ton nginx.conf / docker-compose
+            if curl -s http://localhost:8080 > /dev/null; then
               echo "Green app is up!"
               exit 0
             fi
             echo "Attempt $i/10 - not ready yet..."
-            sleep 3
+            sleep 5
           done
+          # Si ça échoue, on affiche les logs pour comprendre pourquoi
+          docker compose logs
           exit 1
 
-
-      - name: Run Wapiti DAST scan on Green
+      # --- PHASE DE TEST (DAST) ---
+      - name: Run Wapiti DAST scan
         id: wapiti_scan
-        continue-on-error: true # On laisse continuer pour gérer le rollback manuellement juste après
+        continue-on-error: true
         run: |
           sudo apt-get update && sudo apt-get install -y wapiti
-          wapiti -u http://localhost:8081 -f html -o wapiti-report.html
+          wapiti -u http://localhost:8080 -f html -o wapiti-report.html
 
-
-      - name: Check Scan Result & Rollback if needed
+      # --- LOGIQUE DE ROLLBACK ---
+      - name: Check Scan Result & Rollback
         run: |
-          # Si Wapiti a échoué (code de sortie différent de 0)
           if [ "${{ steps.wapiti_scan.outcome }}" == "failure" ]; then
-            echo "🚨 DANGER : Vulnérabilités détectées. ROLLBACK en cours..."
-            docker stop app-green
-            docker rm app-green
-            exit 1 # Arrête le workflow ici
-          else
-            echo "✅ Succès : Aucun problème majeur. Passage à la phase de déploiement final."
+            echo "🚨 DANGER : Vulnérabilités détectées. ROLLBACK immédiat."
+            docker compose down
+            exit 1
           fi
-      - name: Stop Green container before push
-        run: |
-          docker stop app-green
-          docker rm app-green
+
+      # --- NETTOYAGE & PUBLICATION ---
+      - name: Stop Green environment before push
+        run: docker compose down
 
       - name: Login to DockerHub
         if: github.event_name == 'push'
@@ -68,12 +65,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Tag and Push (Switch to Production)
+      - name: Tag and Push
         if: github.event_name == 'push'
         run: |
           REPO=${{ secrets.DOCKERHUB_USERNAME }}/devsecops-blog
-          # L'image Green devient maintenant la "latest" (Blue)
-          docker tag devsecops-blog:green $REPO:latest
-          docker tag devsecops-blog:green $REPO:${{ github.sha }}
+          docker tag devsecops-blog:latest $REPO:latest
+          docker tag devsecops-blog:latest $REPO:${{ github.sha }}
           docker push $REPO:latest
           docker push $REPO:${{ github.sha }}

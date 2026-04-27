@@ -1,0 +1,79 @@
+name: DAST & Blue-Green Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dast-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t devsecops-blog:green .
+
+
+      - name: Start Green environment (Port 8081)
+        run: |
+          # On lance la version Green sur un port différent pour ne pas perturber la Blue
+          docker run -d --name app-green -p 8081:8080 devsecops-blog:green
+
+      - name: Wait for Green app to be ready
+        run: |
+          echo "Waiting for Green app to start on port 8081..."
+          for i in {1..10}; do
+            if curl -s http://localhost:8081 > /dev/null; then
+              echo "Green app is up!"
+              exit 0
+            fi
+            echo "Attempt $i/10 - not ready yet..."
+            sleep 3
+          done
+          exit 1
+
+
+      - name: Run Wapiti DAST scan on Green
+        id: wapiti_scan
+        continue-on-error: true # On laisse continuer pour gérer le rollback manuellement juste après
+        run: |
+          sudo apt-get update && sudo apt-get install -y wapiti
+          wapiti -u http://localhost:8081 -f html -o wapiti-report.html
+
+
+      - name: Check Scan Result & Rollback if needed
+        run: |
+          # Si Wapiti a échoué (code de sortie différent de 0)
+          if [ "${{ steps.wapiti_scan.outcome }}" == "failure" ]; then
+            echo "🚨 DANGER : Vulnérabilités détectées. ROLLBACK en cours..."
+            docker stop app-green
+            docker rm app-green
+            exit 1 # Arrête le workflow ici
+          else
+            echo "✅ Succès : Aucun problème majeur. Passage à la phase de déploiement final."
+          fi
+      - name: Stop Green container before push
+        run: |
+          docker stop app-green
+          docker rm app-green
+
+      - name: Login to DockerHub
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag and Push (Switch to Production)
+        if: github.event_name == 'push'
+        run: |
+          REPO=${{ secrets.DOCKERHUB_USERNAME }}/devsecops-blog
+          # L'image Green devient maintenant la "latest" (Blue)
+          docker tag devsecops-blog:green $REPO:latest
+          docker tag devsecops-blog:green $REPO:${{ github.sha }}
+          docker push $REPO:latest
+          docker push $REPO:${{ github.sha }}

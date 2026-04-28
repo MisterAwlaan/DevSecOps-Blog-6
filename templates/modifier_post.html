@@ -1,247 +1,118 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modifier ma recette - Miamstagram</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div class="container mt-5 mb-5">
-      <div class="row justify-content-center">
-        <div class="col-md-8">
-          <div
-            class="card p-4 shadow-sm"
-            style="border-radius: 25px; border: 3px solid #ffc2d1"
-          >
-            <h2 class="text-center mb-4" style="color: #ff4d6d">
-              Modifier : {{ recette.titre }} ✍️
-            </h2>
-            <hr class="my_line" />
 
-            <form
-              method="POST"
-              action="{{ url_for('modifier_recette', recette_id=recette.recette_id) }}"
-              enctype="multipart/form-data"
-            >
-              <div class="row mb-3">
-                <div class="col-md-8">
-                  <label class="form-label fw-bold" style="color: #7a4a53"
-                    >Titre de la recette</label
-                  >
-                  <input
-                    type="text"
-                    class="form-control"
-                    name="titre"
-                    value="{{ recette.titre }}"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-bold" style="color: #7a4a53"
-                    >Visibilité</label
-                  >
-                  <select
-                    class="form-select"
-                    name="statut"
-                    style="
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modifier ma recette - Miamstagram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card p-4 shadow-sm" style="border-radius: 25px; border: 3px solid #ffc2d1">
+          <h2 class="text-center mb-4" style="color: #ff4d6d">
+            Modifier : {{ recette.titre }} ✍️
+          </h2>
+          <hr class="my_line" />
+
+          <form method="POST" action="{{ url_for('modifier_recette', recette_id=recette.recette_id) }}"
+            enctype="multipart/form-data">
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <label class="form-label fw-bold" style="color: #7a4a53">Titre de la recette</label>
+                <input type="text" class="form-control" name="titre" value="{{ recette.titre }}" required />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold" style="color: #7a4a53">Visibilité</label>
+                <select class="form-select" name="statut" style="
                       border: 2px solid #ffc2d1;
                       border-radius: 50px;
                       color: #ff4d6d;
-                    "
-                  >
-                    <option
-                      value="public"
-                      {%
-                      if
-                      recette.statut=""
-                      ="public"
-                      %}selected{%
-                      endif
-                      %}
-                    >
-                      Publique
-                    </option>
-                    <option
-                      value="prive"
-                      {%
-                      if
-                      recette.statut=""
-                      ="prive"
-                      %}selected{%
-                      endif
-                      %}
-                    >
-                      Privée
-                    </option>
-                  </select>
-                </div>
+                    ">
+                  <option value="public" {% if recette.statut=""="public" %}selected{% endif %}>
+                    Publique
+                  </option>
+                  <option value="prive" {% if recette.statut=""="prive" %}selected{% endif %}>
+                    Privée
+                  </option>
+                </select>
               </div>
+            </div>
 
-              <div class="mb-3">
-                <label class="form-label fw-bold" style="color: #7a4a53"
-                  >Petite description</label
-                >
-                <textarea
-                  class="form-control"
-                  name="description"
-                  rows="2"
-                  style="border-radius: 15px"
-                  required
-                >
-{{ recette.description }}</textarea
-                >
-              </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold" style="color: #7a4a53">Petite description</label>
+              <textarea class="form-control" name="description" rows="2" style="border-radius: 15px" required>
+{{ recette.description }}</textarea>
+            </div>
 
-              <div class="row mb-3">
-                <div class="col-md-4">
-                  <label class="form-label fw-bold" style="color: #7a4a53"
-                    >Difficulté</label
-                  >
-                  <select
-                    class="form-select"
-                    name="difficulte"
-                    style="
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label fw-bold" style="color: #7a4a53">Difficulté</label>
+                <select class="form-select" name="difficulte" style="
                       border: 2px solid #ffc2d1;
                       border-radius: 50px;
                       color: #ff4d6d;
-                    "
-                  >
-                    <option
-                      value="Facile"
-                      {%
-                      if
-                      recette.difficulte=""
-                      ="Facile"
-                      %}selected{%
-                      endif
-                      %}
-                    >
-                      Facile
-                    </option>
-                    <option
-                      value="Moyen"
-                      {%
-                      if
-                      recette.difficulte=""
-                      ="Moyen"
-                      %}selected{%
-                      endif
-                      %}
-                    >
-                      Moyen
-                    </option>
-                    <option
-                      value="Difficile"
-                      {%
-                      if
-                      recette.difficulte=""
-                      ="Difficile"
-                      %}selected{%
-                      endif
-                      %}
-                    >
-                      Difficile
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-bold" style="color: #7a4a53"
-                    >Préparation (min)</label
-                  >
-                  <input
-                    type="number"
-                    class="form-control"
-                    name="temps_preparation"
-                    value="{{ recette.temps_preparation }}"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-bold" style="color: #7a4a53"
-                    >Cuisson (min)</label
-                  >
-                  <input
-                    type="number"
-                    class="form-control"
-                    name="temps_cuisson"
-                    value="{{ recette.temps_cuisson }}"
-                  />
-                </div>
+                    ">
+                  <option value="Facile" {% if recette.difficulte=""="Facile" %}selected{% endif %}>
+                    Facile
+                  </option>
+                  <option value="Moyen" {% if recette.difficulte=""="Moyen" %}selected{% endif %}>
+                    Moyen
+                  </option>
+                  <option value="Difficile" {% if recette.difficulte=""="Difficile" %}selected{% endif %}>
+                    Difficile
+                  </option>
+                </select>
               </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold" style="color: #7a4a53">Préparation (min)</label>
+                <input type="number" class="form-control" name="temps_preparation"
+                  value="{{ recette.temps_preparation }}" required />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold" style="color: #7a4a53">Cuisson (min)</label>
+                <input type="number" class="form-control" name="temps_cuisson" value="{{ recette.temps_cuisson }}" />
+              </div>
+            </div>
 
-              <div class="mb-3">
-                <label class="form-label fw-bold" style="color: #7a4a53"
-                  >Ingrédients</label
-                >
-                <textarea
-                  class="form-control"
-                  name="ingredients"
-                  rows="3"
-                  style="border-radius: 15px"
-                  required
-                >
-{{ recette.ingredients }}</textarea
-                >
-              </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold" style="color: #7a4a53">Ingrédients</label>
+              <textarea class="form-control" name="ingredients" rows="3" style="border-radius: 15px" required>
+{{ recette.ingredients }}</textarea>
+            </div>
 
-              <div class="mb-3">
-                <label class="form-label fw-bold" style="color: #7a4a53"
-                  >Instructions</label
-                >
-                <textarea
-                  class="form-control"
-                  name="instructions"
-                  rows="4"
-                  style="border-radius: 15px"
-                  required
-                >
-{{ recette.instructions }}</textarea
-                >
-              </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold" style="color: #7a4a53">Instructions</label>
+              <textarea class="form-control" name="instructions" rows="4" style="border-radius: 15px" required>
+{{ recette.instructions }}</textarea>
+            </div>
 
-              <div class="mb-4">
-                <label class="form-label fw-bold" style="color: #7a4a53"
-                  >Changer la photo (optionnel)</label
-                >
-                <p class="text-muted" style="font-size: 0.85rem">
-                  Si tu ne mets rien, ton ancienne photo sera conservée.
-                </p>
-                <input
-                  type="file"
-                  class="form-control"
-                  name="image"
-                  accept="image/*"
-                />
-              </div>
+            <div class="mb-4">
+              <label class="form-label fw-bold" style="color: #7a4a53">Changer la photo (optionnel)</label>
+              <p class="text-muted" style="font-size: 0.85rem">
+                Si tu ne mets rien, ton ancienne photo sera conservée.
+              </p>
+              <input type="file" class="form-control" name="image" accept="image/*" />
+            </div>
 
-              <div class="d-flex justify-content-between">
-                <a
-                  href="{{ url_for('profil') }}"
-                  class="btn btn-outline-success"
-                  >Annuler</a
-                >
-                <button type="submit" class="btn btn-primary px-5">
-                  Sauvegarder les modifications
-                </button>
-              </div>
-            </form>
-          </div>
+            <div class="d-flex justify-content-between">
+              <a href="{{ url_for('profil') }}" class="btn btn-outline-success">Annuler</a>
+              <button type="submit" class="btn btn-primary px-5">
+                Sauvegarder les modifications
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>

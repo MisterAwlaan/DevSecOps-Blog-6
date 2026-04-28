@@ -5,66 +5,56 @@ on:
     branches: [main]
     paths:
       - "**.py"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "requirements.txt"
   pull_request:
     branches: [main]
     paths:
       - "**.py"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "requirements.txt"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: MisterAwlaan/DevSecOps-Blog-6
 
 jobs:
-  flake8:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-      - run: pip install flake8
-      - run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-
-  gitleaks:
-    name: Scanning (Gitleaks)
+  secrets-scanning:
+    name: Secrets Scanning (Gitleaks, TruffleHog, Custom)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
-  trufflehog:
-    name: Scanning (TruffleHog)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 
-          
       - name: TruffleHog Secret Scanner
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
           extra_args: --only-verified
-  
-  
-  custom-secret-scan:
-    name: Custom Regex Scanner
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
+        continue-on-error: true
+
       - name: Scan pour des secrets custom
         run: |
           if grep -rE "GUARDIA-API-[A-Z0-9]{16}" . --exclude-dir=.git; then
-            echo "🚨 ERREUR : Un secret custom a été détecté dans le code !"
+            echo "ERREUR : Un secret custom a été détecté dans le code !"
             exit 1
           else
-            echo "✅ Aucun secret custom trouvé."
+            echo "Aucun secret custom trouvé."
           fi
 
-  test:
+  lint-and-test:
+    name: Lint & Test Coverage
     runs-on: ubuntu-latest
+    needs: secrets-scanning
     steps:
       - uses: actions/checkout@v4
       - name: Setup Python
@@ -73,8 +63,10 @@ jobs:
           python-version: "3.10"
       - name: Install dependencies
         run: |
-          pip install pytest pytest-cov
+          pip install flake8 pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Run Flake8
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Run Tests with coverage
         run: python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=40
       - name: Upload coverage report
@@ -83,10 +75,165 @@ jobs:
           name: coverage-report
           path: .coverage
 
-  build:
+  sast:
+    name: SAST (Bandit & Semgrep)
     runs-on: ubuntu-latest
-    needs: [test, flake8]
+    needs: lint-and-test
     steps:
-      - uses: actions/checkout@v4
-      - name: Build Docker Image
-        run: docker build -t mon-app-python .
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install bandit semgrep
+      - name: SAST — Bandit
+        run: bandit -r . -x ./.venv,./static,./templates --severity-level medium -f txt
+        continue-on-error: true
+      - name: SAST — Semgrep
+        run: semgrep scan --config auto .
+        continue-on-error: true
+
+  sca:
+    name: SCA (pip-audit)
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pip-audit
+        run: pip install pip-audit
+      - name: SCA — pip-audit
+        run: pip-audit -r requirements.txt
+
+  image-build-scan:
+    name: Docker Image Build & Trivy Scan
+    runs-on: ubuntu-latest
+    needs: [sast, sca]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan Dockerfile configuration with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Build Docker image
+        run: docker build -t devsecops-blog:latest .
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'devsecops-blog:latest'
+          format: 'table'
+          exit-code: '1' 
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+
+  dast-and-deploy:
+    name: DAST (Wapiti) & Push to Registries
+    runs-on: ubuntu-latest
+    needs: image-build-scan
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t devsecops-blog:latest .
+
+      - name: Start Green environment (via Docker Compose)
+        run: docker compose up -d
+
+      - name: Wait for application to be ready
+        run: |
+          echo "Waiting for app to start on Nginx (port 8080)..."
+          for i in {1..10}; do
+            if curl -s http://localhost:8080 > /dev/null; then
+              echo "Green app is up!"
+              exit 0
+            fi
+            echo "Attempt $i/10 - not ready yet..."
+            sleep 5
+          done
+          docker compose logs
+          exit 1
+
+      - name: Run Wapiti DAST scan
+        id: wapiti_scan
+        continue-on-error: true
+        run: |
+          sudo apt-get update && sudo apt-get install -y wapiti
+          wapiti -u http://localhost:8080 -f html -o wapiti-report.html
+
+      - name: Check Scan Result & Rollback
+        run: |
+          if [ "${{ steps.wapiti_scan.outcome }}" == "failure" ]; then
+            echo "DANGER : Vulnérabilités détectées. ROLLBACK immédiat."
+            docker compose down
+            exit 1
+          fi
+
+      - name: Upload Wapiti report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wapiti-dast-report
+          path: wapiti-report.html
+
+      - name: Stop Green environment before push
+        run: docker compose down
+
+      - name: Login to DockerHub
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag and Push to DockerHub
+        if: github.event_name == 'push'
+        run: |
+          REPO=${{ secrets.DOCKERHUB_USERNAME }}/devsecops-blog
+          docker tag devsecops-blog:latest $REPO:latest
+          docker tag devsecops-blog:latest $REPO:${{ github.sha }}
+          docker push $REPO:latest
+          docker push $REPO:${{ github.sha }}
+
+      - name: Log in to the Container registry (GHCR)
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker (GHCR)
+        id: meta
+        if: github.event_name == 'push'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Push Docker image to GHCR
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

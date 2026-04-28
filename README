@@ -448,6 +448,34 @@ couverture réelle des routes testées.
 
 ---
 
+## Labs 7 à 11 — La Super Pipeline "Fail Fast"
+
+**Objectif :** Unifier tous les processus (Labs 1 à 6) en une seule et même pipeline sécurisée, séquentielle, et respectant la méthodologie **"Fail Fast"**. 
+
+**Fichier principal :** `main.yml`
+
+### Ce qui a été mis en place
+
+L'ensemble des workflows isolés ont été intégrés dans `main.yml`. Le graphe d'exécution force l'arrêt complet de la pipeline si la moindre étape critique échoue, garantissant qu'aucun code vulnérable n'atteigne le registre Docker.
+
+1. **`secrets-scanning`** : Analyse des secrets (Gitleaks, TruffleHog, Custom) en première ligne.
+2. **`lint-and-test`** *(attend `secrets-scanning`)* : Pytest et Flake8.
+3. **`sast`** et **`sca`** *(attendent `lint-and-test`)* : Analyses statiques du code (Bandit, Semgrep) et des paquets Python (pip-audit).
+4. **`image-build-scan`** *(attend `sast` et `sca`)* : 
+   - Scan de la configuration du `Dockerfile` (Trivy).
+   - Build de l'image.
+   - Scan des failles de l'image générée (Trivy).
+5. **`dast-and-deploy`** *(attend `image-build-scan`)* :
+   - Démarrage d'un environnement éphémère (Docker Compose).
+   - Attaque dynamique DAST avec Wapiti.
+   - **Déploiement (Push)** vers DockerHub et GitHub Container Registry (GHCR) en cas de succès absolu de toute la chaîne.
+
+### Pourquoi avoir tout fusionné ?
+
+Les fichiers `.yml` séparés fonctionnaient indépendamment les uns des autres, ce qui pouvait aboutir à des situations où une image était poussée sur un registre malgré l'échec d'un test SAST. L'unification via le mot-clé `needs:` résout ce problème et crée un véritable **"Security Gate"**.
+
+---
+
 ## Lancer l'application en local
 
 ```bash

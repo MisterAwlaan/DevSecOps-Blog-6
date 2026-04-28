@@ -2,11 +2,15 @@
 
 :root {
     /* On redéfinit les couleurs de base de tout le framework */
-    --bs-primary: #ff85a1;        /* Rose vibrant */
+    --bs-primary: #ff85a1;
+    /* Rose vibrant */
     --bs-primary-rgb: 255, 133, 161;
-    --bs-body-bg: #fff0f3;       /* Fond rose très pâle */
-    --bs-body-color: #7a4a53;    /* Texte marron-rose pour plus de douceur que le noir */
-    --bs-border-color: #ffc2d1;  /* Bordures roses */
+    --bs-body-bg: #fff0f3;
+    /* Fond rose très pâle */
+    --bs-body-color: #7a4a53;
+    /* Texte marron-rose pour plus de douceur que le noir */
+    --bs-border-color: #ffc2d1;
+    /* Bordures roses */
 }
 
 /* Fond de page avec un léger motif discret */
@@ -18,7 +22,8 @@ body {
 
 /* --- Barre de navigation --- */
 .navbar.bg-body-tertiary {
-    background-color: #ffe5ec !important; /* Rose crème */
+    background-color: #ffe5ec !important;
+    /* Rose crème */
     border-bottom: 5px solid #ff85a1;
 }
 
@@ -34,7 +39,8 @@ body {
     background-color: #ffffff;
     border: 3px solid #ffc2d1 !important;
     border-radius: 25px !important;
-    box-shadow: 8px 8px 0px #ffdae3; /* Ombre décalée style BD */
+    box-shadow: 8px 8px 0px #ffdae3;
+    /* Ombre décalée style BD */
     transition: all 0.2s ease;
 }
 
@@ -95,7 +101,8 @@ body {
     opacity: 1;
 }
 
-h1, h2 {
+h1,
+h2 {
     color: #ff4d6d;
     text-shadow: 2px 2px 0px #ffffff, 4px 4px 0px #ffdae3;
 }
@@ -109,7 +116,11 @@ footer {
 }
 
 /* --- Typographie : On force le Quicksand partout pour l'aspect arrondi --- */
-body, p, .navbar, .card, .btn {
+body,
+p,
+.navbar,
+.card,
+.btn {
     font-family: 'Quicksand', sans-serif;
 }
 
@@ -127,12 +138,14 @@ body, p, .navbar, .card, .btn {
 
 /* --- Headers de cartes : Finition "Bonbon" --- */
 .card-header {
-    background-color: #ffb3c1 !important; /* Rose un peu plus soutenu */
+    background-color: #ffb3c1 !important;
+    /* Rose un peu plus soutenu */
     color: white !important;
     font-weight: bold;
     text-transform: uppercase;
     border-bottom: 3px solid #ff85a1 !important;
-    border-radius: 22px 22px 0 0 !important; /* On suit l'arrondi de la carte */
+    border-radius: 22px 22px 0 0 !important;
+    /* On suit l'arrondi de la carte */
     text-align: center;
     letter-spacing: 1px;
 }
@@ -140,7 +153,8 @@ body, p, .navbar, .card, .btn {
 /* --- Listes d'ingrédients et groupes --- */
 .list-group-item {
     background-color: transparent !important;
-    border-color: #ffdae3 !important; /* Bordures très douces */
+    border-color: #ffdae3 !important;
+    /* Bordures très douces */
     color: #7a4a53;
     padding: 12px 20px;
 }
@@ -148,7 +162,8 @@ body, p, .navbar, .card, .btn {
 
 /* --- Customisation des puces (Ingrédients) --- */
 .card-body ul {
-    list-style-type: '🌸'; /* Petite fleur à la place des points noirs */
+    list-style-type: '🌸';
+    /* Petite fleur à la place des points noirs */
     padding-left: 20px;
 }
 

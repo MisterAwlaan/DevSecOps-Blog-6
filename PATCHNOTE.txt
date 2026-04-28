@@ -83,3 +83,42 @@ Une fois les bugs corrigés, le coverage est monté à 45%.
 Correction : seuil ajusté à 40% dans `main.yml`, cohérent avec la couverture
 réelle des routes testées et suffisamment exigeant pour constituer un vrai
 gate de qualité.
+
+---
+
+# PATCHNOTE — Labs 7 à 11
+
+**Date :** Avril 2026
+**Auteurs :** MisterAwlaan, XelorCO, Antigravity
+**Branche :** main
+
+---
+
+Refonte de l'architecture CI/CD (Fail Fast Pipeline)
+
+L'objectif principal des Labs 7 à 11 a été de consolider les différents workflows de sécurité créés au cours des Labs 1 à 6 (`sast-sca.yml`, `docker-security.yml`, `dast_and_deploy.yml`, `ghcr.yml`) en un seul et unique pipeline principal : `main.yml`.
+
+Architecture déployée :
+
+1. **Lab 7 & 8 : Intégration SAST et SCA**
+   - Regroupement de `Bandit` et `Semgrep` (SAST) dans le job `sast`.
+   - Ajout de `pip-audit` (SCA) dans le job `sca`.
+   - **Contrainte :** Ces jobs ne se lancent que si le job `lint-and-test` (qui vérifie la qualité du code) réussit.
+
+2. **Lab 9 & 10 : Optimisation du Build et Scan d'Image**
+   - Création du job `image-build-scan`.
+   - Le build Docker et les scans de sécurité `Trivy` (pré-build et post-build) ont été unifiés.
+   - **Contrainte :** Le build d'image Docker ne se lance que si les analyses de sécurité statiques du code (`sast` et `sca`) sont validées. On évite ainsi de builder une image contenant du code vulnérable.
+
+3. **Lab 11 : DAST et Livraison Multi-Registres**
+   - Intégration du job `dast-and-deploy`.
+   - Démarrage de l'application via `docker compose`, suivi d'un scan dynamique `Wapiti` en conditions réelles d'exécution.
+   - Mécanisme de **Rollback** automatique en cas d'échec du DAST.
+   - **Livraison unifiée :** Si toutes les étapes de la pipeline réussissent (aucune faille bloquante détectée), l'image est taguée et poussée simultanément sur **DockerHub** et **GHCR**.
+   - **Contrainte :** Ce job final ne s'exécute que si l'image générée passe avec succès les scans `Trivy` du job précédent.
+
+Bugs corrigés / Points d'attention
+
+Redondance des vérifications
+Le fait d'avoir plusieurs fichiers `.yml` déclenchait des exécutions redondantes et non séquentielles. En fusionnant tout dans `main.yml` avec l'attribut `needs:`, nous avons forcé un ordre d'exécution strict et asynchrone, respectant la méthodologie **"Fail Fast"**. 
+Les fichiers d'origine ont été conservés à des fins d'historique (Labs 1 à 6) tel que demandé, mais c'est désormais `main.yml` qui centralise tout le processus.

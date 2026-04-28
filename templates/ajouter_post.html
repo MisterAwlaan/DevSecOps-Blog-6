@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body>
     <div class="container mt-5 mb-5">
         <div class="row justify-content-center">
@@ -19,7 +21,7 @@
                     <hr class="my_line">
 
                     <form method="POST" action="{{ url_for('ajouter_recette') }}" enctype="multipart/form-data">
-                        
+
                         <div class="row mb-3">
                             <div class="col-md-8">
                                 <label class="form-label fw-bold" style="color: #7a4a53;">Titre de la recette</label>
@@ -27,7 +29,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold" style="color: #7a4a53;">Visibilité</label>
-                                <select class="form-select" name="statut" style="border: 2px solid #ffc2d1; border-radius: 50px; color: #ff4d6d;">
+                                <select class="form-select" name="statut"
+                                    style="border: 2px solid #ffc2d1; border-radius: 50px; color: #ff4d6d;">
                                     <option value="public" selected>Publique</option>
                                     <option value="prive">Privée (Moi seul)</option>
                                 </select>
@@ -36,13 +39,15 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold" style="color: #7a4a53;">Petite description</label>
-                            <textarea class="form-control" name="description" rows="2" style="border-radius: 15px;" required></textarea>
+                            <textarea class="form-control" name="description" rows="2" style="border-radius: 15px;"
+                                required></textarea>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label class="form-label fw-bold" style="color: #7a4a53;">Difficulté</label>
-                                <select class="form-select" name="difficulte" style="border: 2px solid #ffc2d1; border-radius: 50px; color: #ff4d6d;">
+                                <select class="form-select" name="difficulte"
+                                    style="border: 2px solid #ffc2d1; border-radius: 50px; color: #ff4d6d;">
                                     <option value="Facile">Facile</option>
                                     <option value="Moyen">Moyen</option>
                                     <option value="Difficile">Difficile</option>
@@ -59,13 +64,19 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold" style="color: #7a4a53;">Ingrédients (séparés par des virgules)</label>
-                            <textarea class="form-control" name="ingredients" rows="3" placeholder="Farine, 3 œufs, 200g de chocolat..." style="border-radius: 15px;" required></textarea>
+                            <label class="form-label fw-bold" style="color: #7a4a53;">Ingrédients (séparés par des
+                                virgules)</label>
+                            <textarea class="form-control" name="ingredients" rows="3"
+                                placeholder="Farine, 3 œufs, 200g de chocolat..." style="border-radius: 15px;"
+                                required></textarea>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold" style="color: #7a4a53;">Instructions (séparées par des points-virgules ;)</label>
-                            <textarea class="form-control" name="instructions" rows="4" placeholder="Mélanger les œufs ; Ajouter la farine ; Cuire 20 min ;" style="border-radius: 15px;" required></textarea>
+                            <label class="form-label fw-bold" style="color: #7a4a53;">Instructions (séparées par des
+                                points-virgules ;)</label>
+                            <textarea class="form-control" name="instructions" rows="4"
+                                placeholder="Mélanger les œufs ; Ajouter la farine ; Cuire 20 min ;"
+                                style="border-radius: 15px;" required></textarea>
                         </div>
 
                         <div class="mb-4">
@@ -84,4 +95,5 @@
         </div>
     </div>
 </body>
+
 </html>
